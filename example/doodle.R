@@ -11,8 +11,8 @@ tmp_file = tempfile(fileext = ".jpg")
 
 curl = getCurlHandle()
 bfile=getBinaryURL (
-        "http://www.thegreenhead.com/imgs/keith-haring-double-retrospect-worlds-largest-jigsaw-puzzle-2.jpg",
-        curl= curl
+    "http://www.thegreenhead.com/imgs/keith-haring-double-retrospect-worlds-largest-jigsaw-puzzle-2.jpg",
+    curl= curl
 )
 writeBin(bfile, tmp_file)
 rm(curl, bfile)
