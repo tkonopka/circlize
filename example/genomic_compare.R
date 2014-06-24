@@ -9,9 +9,6 @@ circos.trackPlotRegion(ylim = c(0, 1), bg.border = NA, track.height = 0.2)
 		
 chr.xlim = get.cell.meta.data("xlim", sector.index = "chr1")
 
-for(h in c(0, 0.25, 0.5, 0.75, 1)) {
-	circos.lines(chr.xlim, c(h, h), col = "white", sector.index = "chr1")
-}
 
 # just generate data
 xrange = get.cell.meta.data("xrange", sector.index = "chr1")
