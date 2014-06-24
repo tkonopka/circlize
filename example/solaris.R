@@ -1,3 +1,6 @@
+
+## poster from <a href="http://www.imdb.com/title/tt0069293/">Solaris (1972)</a> by master Andrei Tarkovsky
+
 library(circlize)
 
 par(bg = "black", mar = c(1, 1, 1, 1))

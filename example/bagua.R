@@ -1,4 +1,4 @@
- 
+
 library(circlize)
 
 factors = letters[1:8]
@@ -45,9 +45,9 @@ draw.sector(center = c(0, 0), start.degree = -90, end.degree = 90,
 draw.sector(center = c(0, 0), start.degree = 90, end.degree = 270,
     rou1 = 0.4, col = "white", border = "black")
 draw.sector(center = c(0, 0.2), start.degree = 0, end.degree = 360,
-    rou1 = 0.2, col = "white", border = "white")
+    rou1 = 0.2, col = "white", border = NA)
 draw.sector(center = c(0, -0.2), start.degree = 0, end.degree = 360,
-    rou1 = 0.2, col = "black", border = "black")
+    rou1 = 0.2, col = "black", border = NA)
 draw.sector(center = c(0, 0.2), start.degree = 0, end.degree = 360,
     rou1 = 0.05, col = "black", border = "black")
 draw.sector(center = c(0, -0.2), start.degree = 0, end.degree = 360,
