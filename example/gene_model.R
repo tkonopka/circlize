@@ -1,15 +1,15 @@
-##  <a href="../gencode_TP_gene.RData">download gencode_TP_gene.RData</a>
 library(circlize)
+
 par(mar = c(1, 1, 1 ,1))
-load("gencode_TP_gene.RData")
-df = data.frame( names(gencode),
-                 sapply(gencode, function(x) x$start ),
-				 sapply(gencode, function(x) x$end ) )
+
+load(paste(system.file(package = "circlize"), "/extdata/gencode_TP_gene.RData", sep=""))
+df = data.frame( gene = names(gencode),
+                 start = sapply(gencode, function(x) x$start ),
+				 end = sapply(gencode, function(x) x$end ) )
 circos.genomicInitialize(df, sector.name = sapply(gencode, function(x) x$name))
 n = max(sapply(gencode, function(x) length(x$transcript)))
 
-circos.genomicTrackPlotRegion(ylim = c(0, 1), bg.col = c("#FF000040", "#00FF0040", "#0000FF40"),
-	bg.border = NA, track.height = 0.05)
+circos.genomicTrackPlotRegion(ylim = c(0, 1), bg.col = c("#FF000040", "#00FF0040", "#0000FF40"), bg.border = NA, track.height = 0.05)
 
 circos.genomicTrackPlotRegion(ylim = c(0.5, n + 0.5), panel.fun = function(region, value, ...) {
 	gi = get.cell.meta.data("sector.index")

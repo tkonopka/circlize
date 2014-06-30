@@ -1,14 +1,17 @@
 
-## Rainfall plot visualization of CpG islands
-
 library(circlize)
 
-cgi = tempfile(fileext = ".gz")
-download.file("http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cpgIslandExt.txt.gz", destfile = cgi)
-bed = read.table(cgi, sep = "\t")[2:4]
-
 par(mar = c(1, 1, 1, 1))
-circos.initializeWithIdeogram()
-circos.genomicRainfall(bed, pch = 16, cex = 0.3, col = "#0000FF40")
-circos.genomicDensity(bed, col = "#0000FF40")
+
+load(paste(system.file(package = "circlize"), "/extdata/DMR.RData", sep=""))
+
+# rainfall
+circos.initializeWithIdeogram(plotType = c("axis", "labels"))
+
+bed_list = list(DMR_hyper, DMR_hypo)
+circos.genomicRainfall(bed_list, pch = 16, cex = 0.4, col = c("#FF000080", "#0000FF80"))
+
+circos.genomicDensity(bed_list[[1]], col = c("#FF000080"), track.height = 0.1)
+circos.genomicDensity(bed_list[[2]], col = c("#0000FF80"), track.height = 0.1)
+
 circos.clear()
