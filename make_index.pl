@@ -40,7 +40,8 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 		print HTML "<tr>";
 	}
 	
-	print HTML "<td><a href='$html'><img src='$png'/></a></td>";
+	my $timestamp = time.int(rand(999999));
+	print HTML "<td><a href='$html'><img src='$png?$timestamp'/></a></td>";
 
 	open HTML2, ">$html";
 	print HTML2 "<html>
