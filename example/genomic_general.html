@@ -4,7 +4,7 @@
 <link rel='stylesheet' href='styles/github.css'>
 <script src='highlight.pack.js'></script>
 <script>hljs.initHighlightingOnLoad();</script>
-</head><body><p><img src='genomic_general.png' /></p>
+</head><body><p><img src='genomic_general.jpg' /></p><p><a href='genomic_general.pdf'>download PDF</a></p>
 <p id='comment'></p>
 <p id='code'><pre><code>library(circlize) 
 
@@ -53,9 +53,9 @@ col = c("#FF000040", "#0000FF40")
 circos.genomicTrackPlotRegion(bed_list, ylim = c(-1, 1), panel.fun = function(region, value, ...) {
     i = getI(...)
     if(i == 1) {
-        circos.genomicLines(region, value, area = TRUE, area.baseline = 0, col = "orange", border = NA, ...)
+        circos.genomicLines(region, value, area = TRUE, baseline = 0, col = "orange", border = NA, ...)
     } else {
-        circos.genomicLines(region, -value, area = TRUE, area.baseline = 0, col = "yellow", border = NA, ...)
+        circos.genomicLines(region, -value, area = TRUE, baseline = 0, col = "yellow", border = NA, ...)
     }
 }, track.height = 0.1)
 

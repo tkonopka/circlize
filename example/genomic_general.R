@@ -45,9 +45,9 @@ col = c("#FF000040", "#0000FF40")
 circos.genomicTrackPlotRegion(bed_list, ylim = c(-1, 1), panel.fun = function(region, value, ...) {
 	i = getI(...)
 	if(i == 1) {
-		circos.genomicLines(region, value, area = TRUE, area.baseline = 0, col = "orange", border = NA, ...)
+		circos.genomicLines(region, value, area = TRUE, baseline = 0, col = "orange", border = NA, ...)
 	} else {
-		circos.genomicLines(region, -value, area = TRUE, area.baseline = 0, col = "yellow", border = NA, ...)
+		circos.genomicLines(region, -value, area = TRUE, baseline = 0, col = "yellow", border = NA, ...)
 	}
 }, track.height = 0.1)
 

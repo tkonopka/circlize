@@ -15,7 +15,7 @@ circos.trackPlotRegion(ylim = c(0, 1), bg.border = NA, track.height = 0.3,
     panel.fun = function(x, y) {
         for(i in seq_len(n)) {
             circos.text(i-0.5, 0, labels[i], adj = c(1, 0.5), 
-                direction = "vertical_left", col = ct[labels[i]], cex = 0.7)
+                facing = "reverse.clockwise", col = ct[labels[i]], cex = 0.7)
         }
 })
 

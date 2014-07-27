@@ -16,11 +16,11 @@ circos.trackPlotRegion(ylim = c(0, 1), bg.border = NA, track.height = 0.05,
 		theta = mean(get.cell.meta.data("xplot")) %% 360
 		
 		if(theta < 90 || theta > 270) {
-			direction = "vertical_right"
+			facing = "clockwise"
 		} else {
-			direction = "vertical_left"
+			facing = "reverse.clockwise"
 		}
-        circos.text(mean(xlim), 0.5, labels = chr, direction = direction)
+        circos.text(mean(xlim), 0.5, labels = chr, facing = facing)
     })
 
 bed = generateRandomBed(nr = 200, fun = function(k) runif(k))
@@ -40,7 +40,7 @@ region1 = data.frame(chr = c("chr1", "chr1"),
 region2 = data.frame(chr = c("chr1", "chr1"),
                      start = c(87654321, 99999999),
 					 end = c(87654321, 99999999))					 
-circos.genomicLink(region1, region2, top.ratio = 0.8)
+circos.genomicLink(region1, region2, h = 0.2)
 
 circos.clear()
 
@@ -52,7 +52,7 @@ circos.initializeWithIdeogram(chromosome.index = "chr1", plotType = c("ideogram"
 
 text(0, 0.6, "chr1")
 
-circos.genomicLink(region1, region2, top.ratio = 0.8)
+circos.genomicLink(region1, region2, h = 0.5)
 
 circos.clear()       
      

@@ -10,7 +10,7 @@ circos.initialize(factors = factors, xlim = c(0, 12))
 circos.trackPlotRegion(factors = factors, ylim = c(0, 1), bg.border = NA)
 circos.axis(sector.index = "a", major.at = 0:12, labels = "", direction = "inside", 
     labels.cex = 1.5, major.tick.percentage = 0.3)
-circos.text(1:12, rep(0.5, 12), 1:12, direction = "horizontal")
+circos.text(1:12, rep(0.5, 12), 1:12, facing = "downward")
      
 current.time = as.POSIXlt(Sys.time())
 sec = ceiling(current.time$sec)

@@ -31,9 +31,13 @@ my $i = 1;
 foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 	print "running $R\n";
 
-	my $png = $R;
+	my $pdf = $R;
+	my $jpg = $R;
+	my $jpg_small = $R;
 	my $html = $R;
-	$png =~s/R$/png/;
+	$pdf =~s/R$/pdf/;
+	$jpg =~s/R$/jpg/;
+	$jpg_small =~s/R$/small.jpg/;
 	$html =~s/R$/html/;
 
 	if($i % 4 == 1) {
@@ -41,7 +45,7 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 	}
 	
 	my $timestamp = time.int(rand(999999));
-	print HTML "<td><a href='$html'><img src='$png?$timestamp'/></a></td>";
+	print HTML "<td><a href='$html'><img src='$jpg_small?$timestamp'/></a></td>";
 
 	open HTML2, ">$html";
 	print HTML2 "<html>
@@ -50,7 +54,7 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 <link rel='stylesheet' href='styles/github.css'>
 <script src='highlight.pack.js'></script>
 <script>hljs.initHighlightingOnLoad();</script>
-</head><body><p><img src='".basename($png)."' /></p>\n";
+</head><body><p><img src='".basename($jpg)."' /></p><p><a href='".basename($pdf)."'>download PDF</a></p>\n";
 	open R, $R;
 	my $comment = "";
 	while(my $line = <R>) {
@@ -82,14 +86,14 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 
 	$i ++;
 
-	if(-e $png) {
+	if(-e $pdf) {
 		next;
 	}
 
 	open R, $R;
 
 	my ($fh, $filename) = tempfile();
-	print $fh "library(Cairo);CairoPNG('$png', width = 600, height = 600)\n";
+	print $fh "library(Cairo);pdf('$pdf', width = 8, height = 8)\n";
 	while(<R>) {
 		print $fh $_;
 	}
@@ -98,6 +102,9 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 
 	system("Rscript $filename");
 	unlink($filename);
+	
+	system("convert -density 200 $pdf $jpg");
+	system("convert $jpg -scale 300x300 $jpg_small");
 } 
 
 if($i % 4 != 0) {
@@ -105,3 +112,4 @@ if($i % 4 != 0) {
 }
 
 print HTML "</body></html>";
+

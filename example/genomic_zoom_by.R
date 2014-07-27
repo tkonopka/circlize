@@ -18,7 +18,7 @@ par(mar = c(1, 1, 1, 1))
 circos.par(start.degree = 90)
 circos.initializeWithIdeogram(df, sort.chr = FALSE, sector.width = c(chr.len/sum(chr.len), 0.5, 0.5))
 circos.genomicTrackPlotRegion(bed, panel.fun = function(region, value, ...) {
-	circos.genomicPoints(region, value, pch = 16, cex = 0.8)
+	circos.genomicPoints(region, value, pch = 16, cex = 0.5)
 })
 
 circos.link("chr7", get.cell.meta.data("cell.xlim", sector.index = "chr7"),
