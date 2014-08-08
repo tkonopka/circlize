@@ -128,7 +128,7 @@ circos.genomicInitialize = function(data, sector.names = NULL, major.by = NULL,
 					major.at = pretty(xlim - offset, n) + offset
 					major.by = major.at[2] - major.at[1]
 				} else {
-					major.at = seq(xlim[1], 10^nchar(round(max(x2 - x1 + 1))), by = major.by)
+					major.at = seq(xlim[1], xlim[1] + 10^nchar(round(max(x2 - x1 + 1))), by = major.by)
 				}
 				
 				if(major.by > 1e6) {
