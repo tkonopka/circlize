@@ -1,0 +1,17 @@
+<html>
+<head><meta charset='UTF-8' />
+<title>example/chordDiagram_directional.R</title>
+<link rel='stylesheet' href='styles/github.css'>
+<script src='highlight.pack.js'></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head><body><p><img src='chordDiagram_directional.jpg' /></p><p><a href='chordDiagram_directional.pdf'>download PDF</a></p>
+<p id='comment'></p>
+<p id='code'><pre><code>mat = matrix(sample(100, 25), 5)
+rownames(mat) = letters[1:5]
+colnames(mat) = letters[1:5]
+
+library(circlize)
+par(mar = c(1, 1, 1, 1))
+chordDiagram(mat, directional = TRUE, transparency = 0.5)
+</code></pre></p>
+</body></html>

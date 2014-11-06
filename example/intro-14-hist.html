@@ -1,0 +1,21 @@
+<html>
+<head><meta charset='UTF-8' />
+<title>example/intro-14-hist.R</title>
+<link rel='stylesheet' href='styles/github.css'>
+<script src='highlight.pack.js'></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head><body><p><img src='intro-14-hist.jpg' /></p><p><a href='intro-14-hist.pdf'>download PDF</a></p>
+<p id='comment'></p>
+<p id='code'><pre><code>library(circlize)
+par(mar = c(1, 1, 1, 1))
+x = rnorm(2600)
+factors = sample(letters, 2600, replace = TRUE)
+circos.initialize(factors = factors, x = x)
+circos.trackHist(factors = factors, x = x, track.height = 0.1, col = "#999999", border = "#999999")
+circos.trackHist(factors = factors, x = x, force.ylim = FALSE, track.height = 0.1, col = "#999999", border = "#999999")
+circos.trackHist(factors = factors, x = x, draw.density = TRUE, track.height = 0.1, col = "#999999", border = "#999999")
+circos.trackHist(factors = factors, x = x, draw.density = TRUE, force.ylim = FALSE, track.height = 0.1, col = "#999999", border = "#999999")
+
+circos.clear()
+</code></pre></p>
+</body></html>

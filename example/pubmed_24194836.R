@@ -11,7 +11,7 @@ par(mar = c(1, 1, 1, 1), lwd = 0.5)
 circos.par("cell.padding" = c(0, 0, 0, 0))
 circos.initializeWithIdeogram(chromosome.index = "chr1", plotType = NULL)
 
-posTransform.fun = function(region) {
+posTransform.fun = function(region, ...) {
 	return(region)
 }
 bed = generateRandomBed(nr = 400, fun = function(k) rep("gene", k))

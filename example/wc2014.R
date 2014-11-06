@@ -2,8 +2,8 @@
 ## <br>
 ## files are: <a href="table.txt">table.txt</a>, <a href="iso.csv">iso.csv</a>
 
-df0 = read.table("table.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE, quote = "")
-df1 = read.csv("iso.csv", stringsAsFactors=FALSE)
+df0 = read.table("example/table.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE, quote = "")
+df1 = read.csv("example/iso.csv", stringsAsFactors=FALSE)
 
 m = table(df0$country, df0$league)
 

@@ -93,7 +93,7 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 	open R, $R;
 
 	my ($fh, $filename) = tempfile();
-	print $fh "library(Cairo);pdf('$pdf', width = 8, height = 8)\n";
+	print $fh "library(Cairo);library(methods);pdf('$pdf', width = 8, height = 8)\n";
 	while(<R>) {
 		print $fh $_;
 	}
