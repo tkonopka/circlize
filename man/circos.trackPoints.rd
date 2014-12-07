@@ -19,15 +19,15 @@ circos.trackPoints(factors = NULL, x, y, track.index = get.cell.meta.data("track
   \item{x}{Data points on x-axis}
   \item{y}{Data points on y-axis}
   \item{track.index}{Index for the track}
-  \item{pch}{Points type}
-  \item{col}{Points color}
-  \item{cex}{Points size}
+  \item{pch}{Point type}
+  \item{col}{Point color}
+  \item{cex}{Point size}
 
 }
 \details{
-  The function adds points in multiple cells by first splitting data into several parts in which each part corresponds to one factor (sector index) and then add points in cells corresponding to the part of data by calling \code{\link{circos.points}}.  
+  The function adds points in multiple cells by first splitting data into several parts in which each part corresponds to one factor (sector index) and then adding points in each cell by calling \code{\link{circos.points}}.  
 
-  Length of \code{pch}, \code{col} and \code{cex} can be one, length of levels of the factors and length of  factors. All length will be recycled to the length of factors respectively.  
+  Length of \code{pch}, \code{col} and \code{cex} can be one, length of levels of the factors or length of  factors.  
 
   This function can be replaced by a \code{for} loop containing \code{\link{circos.points}}. 
 

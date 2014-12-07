@@ -30,7 +30,7 @@ circos.rect(xleft, ybottom, xright, ytop,
 
 }
 \details{
-  Currently, \code{xleft}, \code{ybottom}, \code{xright}, \code{ytop} are all single values, which means you can only draw one rectangle at once. Well, the name for this function is \code{\link{circos.rect}} because if you imagin the plotting region as Cartesian coordinate, then it is rectangle. in the polar coordinate, the up and bottom edge become two arcs.  
+  Currently, \code{xleft}, \code{ybottom}, \code{xright}, \code{ytop} are all single values, which means you can only draw one rectangle at once. The name for this function is \code{\link{circos.rect}} because if you imagine the plotting region as Cartesian coordinate, then it is rectangle. in the polar coordinate, the up and bottom edge become two arcs.  
 
   You just need to specify the coordinates of two diagonal points just similar as  \code{\link[graphics]{rect}} does. 
 

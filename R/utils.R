@@ -16,16 +16,19 @@ circlize = function(x, y, sector.index = get.current.sector.index(),
 	track.index = get.current.track.index()) {
     
     sector.data = get.sector.data(sector.index)
-    cell.data = get.cell.data(sector.index, track.index)
-    cell.ylim = get.cell.meta.data("cell.ylim", sector.index, track.index)
-        
+       
     theta = sector.data["start.degree"] - (x - sector.data["min.value"]) / (sector.data["max.value"] - sector.data["min.value"]) *
             abs(sector.data["start.degree"] - sector.data["end.degree"])
-        
-    y.range = cell.ylim[2] - cell.ylim[1]
-        
-    rou = cell.data$track.start - (cell.ylim[2] - y) / y.range * cell.data$track.height
     
+	if(track.index == 0) {
+		rou = rep(1, length(theta))
+	} else {
+		cell.data = get.cell.data(sector.index, track.index)
+		cell.ylim = get.cell.meta.data("cell.ylim", sector.index, track.index)  
+		y.range = cell.ylim[2] - cell.ylim[1] 
+		rou = cell.data$track.start - (cell.ylim[2] - y) / y.range * cell.data$track.height
+    }
+	
     m = cbind(theta, rou)
     colnames(m) = c("theta", "rou")
     rownames(m) = NULL
@@ -33,8 +36,22 @@ circlize = function(x, y, sector.index = get.current.sector.index(),
     return(m)
 }
 
-# reverse function of circlize
-reverse.circlize = function(theta, rou, sector.index, track.index) {
+# == title
+# Return the coordinate in data coordinate system
+#
+# == param
+# -theta        measured by degree
+# -rou          distance to the circle center (radius)
+# -sector.index Index for the sector
+# -track.index  Index for the track
+#
+# == details
+# This is the reverse function of `circlize`. It transform data points from polar coordinate system to data coordinate system.
+#
+# == values
+# A matrix with two columns (``x`` and ``y``)
+reverse.circlize = function(theta, rou, sector.index = get.current.sector.index(),
+    track.index = get.current.track.index()) {
 	sector.data = get.sector.data(sector.index)
     cell.data = get.cell.data(sector.index, track.index)
 	cell.ylim = get.cell.meta.data("cell.ylim", sector.index, track.index)
@@ -45,6 +62,7 @@ reverse.circlize = function(theta, rou, sector.index, track.index) {
 	
 	m = cbind(x, y)
 	colnames(m) = c("x", "y")
+	rownames(m) = NULL
 	return(m)
 }
 
@@ -117,22 +135,22 @@ recycle.with.levels = function(x, levels) {
     return(x)
 }
 
-check.track.position = function(trace.index, track.start, track.height) {
+check.track.position = function(track.index, track.start, track.height) {
 
     track.margin = circos.par("track.margin")
     if(track.start - track.height - track.margin[2] < 0 ||
        track.start - track.height < 0 ||
        track.start < 0) {
-        stop(paste("not enough space for plotting region of track index '", trace.index, "'.\n", sep = ""))
+        stop(paste("not enough space for cells at track index '", track.index, "'.\n", sep = ""))
     }
     if(track.start - track.margin[1] - track.height - track.margin[2] < 0) {
-        stop(paste("not enough space for bottom margin of track index '", trace.index, "'.\n", sep = ""))
+        stop(paste("not enough space for bottom margin of cells at track index '", track.index, "'.\n", sep = ""))
     }
     
-    if(trace.index > 1) {
+    if(track.index > 1) {
         
-        if(track.start > get.track.end.position(trace.index - 1)) {
-            stop("Plotting region overlaps with previous track.\n")
+        if(track.start > get.cell.meta.data("cell.bottom.radius", track.index = track.index - 1)) {
+            stop("Track overlaps with previous track.\n")
         }
     }
 }
@@ -166,24 +184,28 @@ as.degree = function(radian) {
 # Color interpolation
 #
 # == param
-# -breaks a vector indicating breaks of your data
-# -colors a vector of colors which corresponds to values in ``breaks``
-# -transparency a single value in [0, 1]. 0 refers to no transparency and 1 refers to complete transparency
-# -... pass to `grDevices::colorRamp`
+# -breaks A vector indicating numeric breaks
+# -colors A vector of colors which correspond to values in ``breaks``
+# -transparency A single value in [0, 1]. 0 refers to no transparency and 1 refers to full transparency
 #
 # == details
-# Colors are interpolated according to break values and corresponding colors
+# Colors are interpolated according to break values and corresponding colors. Values exceeding breaks will be assigned with maximum or minimum colors.
 #
 # == values
 # It returns a function which accepts a vector of numbers and returns interpolated colors.
-colorRamp2 = function(breaks, colors, transparency = 0, ...) {
+colorRamp2 = function(breaks, colors, transparency = 0) {
     if(length(breaks) != length(colors)) {
         stop("Length of `breaks` should be equal to `colors`.\n")
     }
+	
+	if(length(unique(breaks)) != length(breaks)) {
+		stop("Duplicated values are not allowed in `breaks`\n")
+	}
+
     colors = colors[order(breaks)]
 	colors = col2rgb(colors)
     breaks = sort(breaks)
-
+	
     transparency = ifelse(transparency > 1, 1, ifelse(transparency < 0, 0, transparency))
 
     function(x) {
@@ -209,14 +231,14 @@ colorRamp2 = function(breaks, colors, transparency = 0, ...) {
 # rgb1 vector with 3 elements
 # rgb2 vector with 3 elements
 .get_color = function(x, break1, break2, rgb1, rgb2, transparency) {
-	res_rgb = NULL
+	res_rgb = matrix(nrow = 3, ncol = length(x))
 	for(i in seq_along(x)) {
-		res_rgb = cbind(res_rgb, (x[i] - break2)*(rgb2 - rgb1) / (break2 - break1) + rgb2)
+		res_rgb[, i] = (x[i] - break2)*(rgb2 - rgb1) / (break2 - break1) + rgb2
 	}
 	return(rgb(t(res_rgb)/255, alpha = 1-transparency))
 }
 
-# will be considerred in the future
+# will be considered in the future
 circos.approx = function(x, y, resolution = 0.1, sector.index = get.cell.meta.data("sector.index"),
 	track.index = get.cell.meta.data("track.index"),
 	approxFun = function(x) sample(x, 1)) {
@@ -247,4 +269,27 @@ circos.approx = function(x, y, resolution = 0.1, sector.index = get.cell.meta.da
 	newy = newy[!is.na(newy)]
 	
 	return(list(x = newx, y = newy))
+}
+
+# == title
+# generate random colors
+#
+# == param
+# -n number of colors
+# -transparency transparency, numeric value between 0 and 1
+#
+# == value
+# a vector of colors
+rand_color = function(n = 1, transparency = 0) {
+    return(rgb(runif(n), runif(n), runif(n), 1 - transparency))
+}
+
+get_most_inside_radius = function() {
+	tracks = get.all.track.index()
+	if(length(tracks) == 0) {
+	    1
+	} else {
+	    n = length(tracks)
+	    get.cell.meta.data("cell.bottom.radius", track.index = tracks[n]) - get.cell.meta.data("track.margin", track.index = tracks[n])[1] - circos.par("track.margin")[2]
+	}
 }
