@@ -1,3 +1,6 @@
+
+
+
 df = read.table(textConnection("
  Brand_from model_from Brand_to Model_to
       VOLVO        s80      BMW  5series
@@ -25,3 +28,39 @@ chordDiagram(mat, order = sort(union(from, to)),
         list(track.height = 0.02),
         list(track.height = 0.02))
 )
+
+circos.trackPlotRegion(track.index = 3, panel.fun = function(x, y) {
+    xlim = get.cell.meta.data("xlim")
+    ylim = get.cell.meta.data("ylim")
+    sector.index = get.cell.meta.data("sector.index")
+    model = strsplit(sector.index, ",")[[1]][2]
+    circos.text(mean(xlim), mean(ylim), model, col = "white", cex = 0.8, facing = "inside", niceFacing = TRUE)
+}, bg.border = NA)
+
+all_sectors = get.all.sector.index()
+rou1 = get.cell.meta.data("yplot", sector.index = all_sectors[1], track.index = 2)[1]
+rou2 = get.cell.meta.data("yplot", sector.index = all_sectors[1], track.index = 2)[2]
+
+start.degree = get.cell.meta.data("xplot", sector.index = all_sectors[1], track.index = 2)[1]
+end.degree = get.cell.meta.data("xplot", sector.index = all_sectors[3], track.index = 2)[2]
+draw.sector(start.degree, end.degree, rou1, rou2, clock.wise = TRUE, col = "red", border = NA)
+
+m = reverse.circlize( (start.degree + end.degree)/2, 1, sector.index = all_sectors[1], track.index = 1)
+circos.text(m[1, 1], m[1, 2], "AUDI", cex = 1.2, facing = "inside", adj = c(0.5, 0), niceFacing = TRUE, 
+    sector.index = all_sectors[1], track.index = 1)
+
+start.degree = get.cell.meta.data("xplot", sector.index = all_sectors[4], track.index = 2)[1]
+end.degree   = get.cell.meta.data("xplot", sector.index = all_sectors[5], track.index = 2)[2]
+draw.sector(start.degree, end.degree, rou1, rou2, clock.wise = TRUE, col = "green", border = NA)
+m = reverse.circlize( (start.degree + end.degree)/2, 1, sector.index = all_sectors[1], track.index = 1)
+circos.text(m[1, 1], m[1, 2], "BMW", cex = 1.2, facing = "inside", adj = c(0.5, 0), niceFacing = TRUE, 
+    sector.index = all_sectors[1], track.index = 1)
+
+start.degree = get.cell.meta.data("xplot", sector.index = all_sectors[6], track.index = 2)[1]
+end.degree  = get.cell.meta.data("xplot", sector.index = all_sectors[7], track.index = 2)[2]
+draw.sector(start.degree, end.degree, rou1, rou2, clock.wise = TRUE, col = "blue", border = NA)
+m = reverse.circlize( (start.degree + end.degree)/2, 1, sector.index = all_sectors[1], track.index = 1)
+circos.text(m[1, 1], m[1, 2], "VOLVO", cex = 1.2, facing = "inside", adj = c(0.5, 0), niceFacing = TRUE, 
+    sector.index = all_sectors[1], track.index = 1)
+
+circos.clear()
