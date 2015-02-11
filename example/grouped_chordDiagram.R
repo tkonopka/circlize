@@ -20,9 +20,10 @@ rownames(mat) = unique(from)
 colnames(mat) = unique(to)
 for(i in seq_along(from)) mat[from[i], to[i]] = 1
 
+library(circlize)
+
 circos.par(gap.degree = c(2, 2, 8, 2, 8, 2, 8))
 
-par(mar = c(1, 1, 1, 1))
 chordDiagram(mat, order = sort(union(from, to)),
     direction = TRUE, annotationTrack = "grid", preAllocateTracks = list(
         list(track.height = 0.02),
