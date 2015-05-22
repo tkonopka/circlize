@@ -1,4 +1,3 @@
-# History files
 .Rhistory
 
 # Example code in package build process
@@ -9,6 +8,8 @@
 
 # RStudio files
 .Rproj.user/
-
 .DS_Store
 .*
+*~
+doodle.pdf
+.directory
