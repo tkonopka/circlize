@@ -4,7 +4,7 @@
 <link rel='stylesheet' href='styles/github.css'>
 <script src='highlight.pack.js'></script>
 <script>hljs.initHighlightingOnLoad();</script>
-</head><body><p><img src='grouped_chordDiagram.jpg' /></p><p><a href='grouped_chordDiagram.pdf'>download PDF</a></p>
+</head><body><p><img src='grouped_chordDiagram.jpg' style='width:1000px;height:1000px'></p><p><a href='grouped_chordDiagram.pdf'>download PDF</a></p>
 <p id='comment'></p>
 <p id='code'><pre><code>
 
@@ -33,7 +33,7 @@ library(circlize)
 circos.par(gap.degree = c(2, 2, 8, 2, 8, 2, 8))
 
 chordDiagram(mat, order = sort(union(from, to)),
-    direction = TRUE, annotationTrack = "grid", preAllocateTracks = list(
+    directional = 1, annotationTrack = "grid", preAllocateTracks = list(
         list(track.height = 0.02),
         list(track.height = 0.02))
 )

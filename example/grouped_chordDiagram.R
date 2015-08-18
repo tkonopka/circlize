@@ -25,7 +25,7 @@ library(circlize)
 circos.par(gap.degree = c(2, 2, 8, 2, 8, 2, 8))
 
 chordDiagram(mat, order = sort(union(from, to)),
-    direction = TRUE, annotationTrack = "grid", preAllocateTracks = list(
+    directional = 1, annotationTrack = "grid", preAllocateTracks = list(
         list(track.height = 0.02),
         list(track.height = 0.02))
 )

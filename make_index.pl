@@ -55,7 +55,7 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 <link rel='stylesheet' href='styles/github.css'>
 <script src='highlight.pack.js'></script>
 <script>hljs.initHighlightingOnLoad();</script>
-</head><body><p><img src='".basename($jpg)."' /></p><p><a href='".basename($pdf)."'>download PDF</a></p>\n";
+</head><body><p><img src='".basename($jpg)."' style='width:1000px;height:1000px'></p><p><a href='".basename($pdf)."'>download PDF</a></p>\n";
 	open R, $R;
 	my $comment = "";
 	while(my $line = <R>) {
@@ -91,7 +91,7 @@ foreach my $R (sort { (stat($b))[10] <=> (stat($a))[10] } @Rscript) {
 		next;
 	}
 	if($pdf=~/doodle/) {
-		next;
+#		next;
 	}
 
 	open R, $R;
