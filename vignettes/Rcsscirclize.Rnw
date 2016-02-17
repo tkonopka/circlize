@@ -1,0 +1,381 @@
+% \VignetteIndexEntry{Styling circlize plots with Rcssplot}
+% \VignetteDepends{circlize}
+% \VignetteDepends{Rcssplot}
+% \VignetteKeywords{circos R}
+% \VignetteKeywords{ideogram}
+% \VignetteKeywords{circlize}
+% \VignetteKeywords{Rcssplot}
+% \VignettePackage{circlize}
+% \VignetteCompiler{knitr}
+% \VignetteEngine{knitr::knitr}
+
+
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[sc]{mathpazo}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+
+\setcounter{tocdepth}{2}
+
+\title{Styling \textbf{circlize} plots with \textbf{Rcssplot}}
+
+\author{Tomasz Konopka {\tt <tomasz.konopka@ludwig.ox.ac.uk>}}
+\usepackage[margin=1in, a4paper]{geometry}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+\maketitle 
+
+
+<<echo = FALSE>>=
+library(knitr)
+opts_chunk$set(fig.pos = "", fig.align = "center")
+
+library(circlize)
+library(Rcssplot)
+circos.initialize = function(...) {
+    circos.par(unit.circle.segments = 120)
+    circlize::circos.initialize(...)
+}
+@
+
+The {\tt circlize} package can produce complex and rich visualizations that can be customized in many ways. Manually overriding default parameters for graphical settings, however, can result in complex code that can be tedious to write and to mantain. To overcome this, the capabilities of the {\tt Rcssplot} package are integrated with {\tt circlize} plot functions. 
+
+
+\section{Styling custom {\tt circlize} plots}
+
+Following is an example to show styling of \textbf{circlize} plots. The example is an adaptation of the material from the ``An introduction to {\tt circlize}'' vignette.
+
+To start, let's generate some random data with a factor column representing categories, and two columns with values to show on the x- and y-axes.
+
+<<>>=
+set.seed(999)
+n = 1000
+a = data.frame(factor = sample(letters[1:8], n, replace = TRUE),
+    x = rnorm(n), y = runif(n))
+head(a, 4)
+@
+
+We will now look at ways to visualize this dataset and to tune the appearance of the charts. We will do so first using explicit styling, and then using cascading style sheets. 
+
+We will be interested in creating complex visualizations. So let's define a custom function to produce {\tt circlize} charts with multiple tracks and links.
+
+<<circlize_fun_base, eval = FALSE>>=
+custom.plot.base = function(a, col=rep(c("#ff0000","#0000ff"), 4)) {
+
+  ## initialize
+  circos.par("track.height"=0.1)  
+  circos.initialize(factors=a$factor, x=a$x)  
+  
+  ## outer track
+  circos.trackPlotRegion(factors=a$factor, y=a$y,
+      panel.fun = function(x, y) {
+          circos.axis()
+      })  
+  circos.trackPoints(a$factor, a$x, a$y, col=col, pch=16, cex=0.5)
+  
+  ## middle track
+  circos.trackPlotRegion(factors=a$factor, x=a$x, y=a$y,
+      panel.fun = function(x, y) {
+          circos.points(x[1:10], y[1:10], col="red", pch=16, cex=0.6)
+          circos.points(x[11:20], y[11:20], col="blue", cex=0.6)
+      })
+  
+  ## inner links
+  circos.link("a", 0, "b", 0, h=0.4)
+  circos.link("c", c(-0.5, 0.5), "d", c(-0.5, 0.5), col="red", border="blue", h=0.2)
+  circos.link("e", 0, "g", c(-1, 1), col="green", lwd=2, lty=2)  
+  
+  ## cleanup
+  circos.clear()
+}
+@
+
+\noindent For an explanation of the individual commands within this function, please refer to the introductory vignette. Given this function, we can create a rather complex chart with a single command using our dataset as the first parameter (Fig \ref{fig:rcsscirclize_demo1}A).
+
+<<rcsscirclize_1A, eval=FALSE>>=
+custom.plot.base(a)
+@
+
+To customize the chart, we can add a second argument to the function call. This controls the colors of the points in the outer track (Fig \ref{fig:rcsscirclize_demo1}B).
+
+<<rcsscirclize_1B, eval=FALSE>>=
+pcols = rep(c("#dd0000", "#0099ee"), 4)
+custom.plot.base(a, col=pcols)
+@
+
+\noindent Although the modification is noticable, it is also rather limited. Further modification, however, are not easily accessible to the user and require re-writing of the custom plot function. This is not ideal because it mixes code that presumably analyzes data with graphical settings that affect only the presentation.
+
+
+<<rcsscirclize_demo1, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.3\\textheight", fig.width = 7, fig.height = 3.5, fig.cap = "Styling of {\\tt circlize} charts. (A) A starting style defined in function {\\tt custom.plot.base} (B) Another plot of the same data produced by {\\tt custom.plot.base} with explicit change of colors. ">>=
+par(mfrow = c(1, 2), mar = c(1, 1, 1, 1))
+<<circlize_fun_base>>  
+  <<rcsscirclize_1A>>
+  text(-0.9, 0.9, "A", cex = 1.5)
+<<rcsscirclize_1B>>
+  text(-0.9, 0.9, "B", cex = 1.5)
+par(mfrow = c(1, 1))
+@
+
+
+
+
+\section{Styling with cascading style sheets}
+
+To separate analysis from presentation, it is possible to style R plots using cascading style sheets using package {\tt Rcssplot}. In this approach, graphics settings are specified separately from the code handling the data. 
+
+In practice, this means code for plotting is written using {\tt Rcssplot} functions and the styles are prepared separately in css format. 
+
+Let's start with the new code. We can use the previous function as a template and modify it by replacing base functions with their css equivalents, and by replacing explicit styling settings with a css object and a css class.
+
+<<circlize_fun_rcss, eval = FALSE>>=
+custom.plot.rcss = function(a, Rcss="default", Rcssclass=c(), ...) {
+  
+  ## initialize
+  circos.Rcssinitialize(factors=a$factor, x=a$x, 
+      Rcss=Rcss, Rcssclass=Rcssclass)
+  
+  ## outer track
+  circos.RcsstrackPlotRegion(factors=a$factor, y=a$y, 
+      Rcss=Rcss, Rcssclass=Rcssclass,
+      panel.fun = function(x,y) {
+          circos.Rcssaxis(Rcss=Rcss, Rcssclass=c("axis", Rcssclass))
+      })  
+  circos.RcsstrackPoints(a$factor, a$x, a$y, 
+      Rcss=Rcss, Rcssclass=Rcssclass, ...)
+  
+  ## middle track
+  circos.RcsstrackPlotRegion(factors=a$factor, x=a$x, y=a$y, 
+      Rcss=Rcss, Rcssclass=Rcssclass, 
+      panel.fun = function(x, y) {
+          sector.index = get.cell.meta.data("sector.index")
+          circos.Rcsspoints(x[1:10], y[1:10], 
+               Rcss=Rcss, Rcssclass=c(Rcssclass, "first"))
+          circos.Rcsspoints(x[11:20], y[11:20], 
+               Rcss=Rcss, Rcssclass=c(Rcssclass, "second"))
+      })
+  
+  ## inner links
+  circos.Rcsslink("a", 0, "b", 0, Rcss=Rcss, 
+      Rcssclass=c(Rcssclass, "linkA"))
+  circos.Rcsslink("c", c(-0.5, 0.5), "d", c(-0.5, 0.5),  
+      Rcss=Rcss, Rcssclass=c(Rcssclass, "linkB"))
+  circos.Rcsslink("e", 0, "g", c(-1, 1), 
+      Rcss=Rcss, Rcssclass=c(Rcssclass, "linkC"))
+  
+  ## cleanup
+  circos.clear()
+}
+@ 
+
+The differences between this function and the previous version are fourfold: 
+
+\begin{itemize}
+
+\item This function now accepts an {\tt Rcss} object and an {\tt Rcssclass} class.
+
+\item {\tt circlize} functions are replaced by analogs with Rcss prefixes. For example, {\tt circos.points} is replaced with {\tt circos.Rcsspoints}.
+
+\item Explicit graphical parameters like {\tt pch=16} are removed and replaced by {\tt Rcss} objects. 
+
+\item Where there are multiple commands adding various components to the chart, the classes are augmented by additional labels. For example, the links at the end have labels {\tt linkA}, {\tt linkB}, and {\tt linkC} to differentiate them.
+
+\end{itemize}
+
+To apply this function to our data, we also need to obtain some actual cascading style sheet objects. Several styles are included in the {\tt extdata} folder of the package. We load four styles prepared in files {\tt style1.Rcss}, {\tt style2.Rcss}, etc. 
+
+<<<>>=
+library(Rcssplot)
+rcss.files = system.file("extdata", paste0("style", 1:4, ".Rcss"), package="circlize") 
+mycss = lapply(as.list(rcss.files), Rcss)
+@ 
+
+The first css style is designed to produce output similar to the original function (Fig \ref{fig:rcsscirclize_demo2}C). 
+
+<<rcsscirclize_2A, eval=FALSE>>=
+pcols = structure(rep(c("#dd1100", "#0011dd"), 4), names=letters[1:8])
+custom.plot.rcss(a, col=pcols, Rcss=mycss[[1]])
+@
+
+\noindent Note we also provide the function with colors for the points in each of the eight sectors. 
+
+The other styles demonstrate other capabilities of the {\tt circlize} package and {\tt Rcss} styling. In particular, the second style alters some of the global settings (Fig \ref{fig:rcsscirclize_demo2}B). 
+
+<<rcsscirclize_2B, eval=FALSE>>=
+custom.plot.rcss(a, col=pcols, Rcss=mycss[[2]])
+@
+
+\noindent Note how the track heights, gaps between sectors, background colors, axis fonts, etc are uniformly different across the entire chart. The whole chart is also oriented at a different angle. (Such global settings can also be changed within standard {\tt circlize} through global settings. In this case all the effects are achieved outside of the R script in a separated css file.)
+
+The third style tunes specific elements or element classes within the chart (Fig \ref{fig:rcsscirclize_demo2}C). 
+
+<<rcsscirclize_2C, eval=FALSE>>=
+custom.plot.rcss(a, col=pcols, Rcss=mycss[[3]])
+@
+
+\noindent Note how the points in the middle track are tuned according to the {\tt first} and {\tt second} class names. The appearance of the three links are also changed using the {\tt linkX} class names. The plot also demonstrates another feature that is not explicit in the function code. Because the sectors are defined using factors, the factor names can serve as identifiers. A css object can exploit these factor names to provide additional tuning. 
+
+The fourth style is a final example which uses both global and class-specific tuning (Fig \ref{fig:rcsscirclize_demo2}D).
+
+<<rcsscirclize_2D, eval=FALSE>>=
+custom.plot.rcss(a, col=pcols[c("f","h")], Rcss=mycss[[4]])
+@
+
+\noindent An interesting capability demonstrated in this plot is an interaction between css- and user-specified styles. The points in the outer track are styled in a gray color through the css. The user call to the function overrides the colors for two sectors via the explicit reference to {\tt col}.
+
+
+<<rcsscirclize_demo2, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.6\\textheight", fig.width = 7, fig.height = 7, fig.cap = "Styling of {\\tt circlize} charts. (A-D) Charts produced by {\\tt custom.plot.rcss} with four different {\\tt Rcss} style objects.">>=
+par(mfrow = c(2, 2), mar = c(1, 1, 1, 1))
+<<circlize_fun_rcss>>   
+<<rcsscirclize_2A>>
+  text(-0.9, 0.9, "A", cex = 1.5)
+<<rcsscirclize_2B>>
+  text(-0.9, 0.9, "B", cex = 1.5)
+<<rcsscirclize_2C>>
+  text(-0.9, 0.9, "C", cex = 1.5)
+<<rcsscirclize_2D>>
+  text(-0.9, 0.9, "D", cex = 1.5)
+par(mfrow = c(1, 1))
+@
+
+
+
+
+\section{Summary}
+
+The {\tt circlize} package provides many opportunities for customization. However, as with all complex visualizations, these customizations can take many lines of code. With cascading style sheets, however, it is possible to absorb most of these customizations into separate style definitions that are separate from data analysis. 
+
+\vspace*{0.5cm}
+\noindent Cascading style sheets have a number of advantages:
+
+\begin{itemize}
+\item Tuning plots can be performed using css files that are separate from R scripts. This facilitates writing code maintenance, and makes tuning visualizations data safe (i.e. you won't accidentally introduce bugs in the analysis while changing graphical settings.)
+\item Styles are easily reusable across several custom plot functions or across multiple projects. 
+\end{itemize}
+
+\vspace*{0.5cm}
+\noindent Cascading style sheets have some features to get used to:
+
+\begin{itemize}
+\item Using css styles in {\tt circlize} requires rewriting some of the code. However, the required changes are mostly mechanical and simple.
+\item Styling of individual components requires using subclasses. Exploiting these subclasses in css styles still requires looking through the code or each function documentation.
+\item Some graphical settings are transfered from function definitions into implicit selectors or features in css objects. Finding tunable parameters requires looking through the function documentation.
+\end{itemize}
+
+
+
+\appendix
+
+\section{Reference of circlize cascading style sheets}
+
+All the styling options available through cascading style sheets in circlize 
+are encoded in a `base' Rcss file.
+
+<<rcsscirclize_app01, eval=TRUE>>=
+base.rcss.file = system.file("extdata", "circlize.base.Rcss", package="circlize") 
+@
+
+\noindent This file is formatted in the same way as standard css and contains settings tuning various circlize components. For example, definitions tuning `regions' are encoded using the selector {\tt circlizeregion} as follows:
+
+<<rcsscirclize_app03, eval=FALSE, highlight=FALSE>>=
+circlizeregion {
+  bg.col: NA;
+  bg.border: #000000;
+  bg.lty: 1;
+  bg.lwd: 1;
+}
+@
+
+\noindent In this syntax, the starting identifier (in this case, {\tt circlizeregion}) is called the css selector. The other lines specify arguments and their values. Note that colors are not enclosed in any quotation marks. Some arguments can take multiple values; these are then separated by spaces (not commas). 
+
+To use these definition in plots, the css file must be parsed into an R object using the {\tt Rcss()} command. The defined settings then become accessible through {\tt printRcss()}. 
+
+<<rcsscirclize_app02, eval=TRUE>>=
+base.rcss = Rcss(base.rcss.file)
+printRcss(base.rcss, "circlizeregion")
+@
+
+The rest of this appendix summarizes the custom selectors used by various {\tt circlize} functions. These summaries show all the settings and suggested starting values. 
+
+Note that adding settings into these selectors will produce css files that will parse without error, but will not affect plotting. To customize other aspects of circlize plots, use the css selectors corresponding to base graphics (see end of the appendix)
+
+
+
+
+
+\subsection{`circlize'}
+
+The {\tt circlize} selector tunes the look of the overall circlize chart. These options include margins, heights of tracks, etc.
+
+<<rcsscirclize_appcirclize, eval=TRUE>>=
+printRcss(base.rcss, "circlize")
+@
+
+\noindent For this selector, the base style also contain a {\tt draft} subclass which reduces the number of segments used to draw curves. To see all the settings, including the subclasses, print the selector details in verbose mode.
+
+\subsection{`circlizeaxis'}
+
+The {\tt circlizeaxis} selector tunes the axes drawn by function {\tt circos.Rcssaxis}.
+
+<<rcsscirclize_appaxis, eval=TRUE>>=
+printRcss(base.rcss, "circlizeaxis")
+@
+
+
+\subsection{`circlizelines'}
+
+The {\tt circlizelines} selector tunes the defaults for lines/arcs displayed
+by {\tt circos.Rcsslines}. These definitions are also used through various other functions. 
+
+<<rcsscirclize_applines, eval=TRUE>>=
+printRcss(base.rcss, "circlizelines")
+@
+
+
+\subsection{`circlizelink'}
+
+The {\tt circlizelink} selector tunes the lines/links between sectors displayed
+by {\tt circos.Rcsslink}. 
+
+<<rcsscirclize_applink, eval=TRUE>>=
+printRcss(base.rcss, "circlizelink")
+@
+
+
+\subsection{`circlizeregion'}
+
+The {\tt circlizeregion} selector tunes the regions/sectors within a chart.
+
+<<rcsscirclize_appregion, eval=TRUE>>=
+printRcss(base.rcss, "circlizeregion")
+@
+
+
+\subsection{`circlizetext'}
+
+The {\tt circlizetext} selector tunes text boxes disaplayed by {\tt circos.Rcsstext()} 
+and by various other functions that add labels to points and axes.
+
+<<rcsscirclize_apptext, eval=TRUE>>=
+printRcss(base.rcss, "circlizetext")
+@
+
+\subsection{Relevant selectors from base graphics}
+
+{\tt circlize} function uses base graphics to place graphical components onto charts. Many features of {\tt circlize} charts can thus be tuned through the base graphics selectors. For example, appearance of points can be changed through the usual selector {\tt points}. See the css configurations used earlier in the tutorial for specific examples.
+
+However, because {\tt circlize} converts lines into a polar space, some graphical components are not placed through the usual base graphics functions. A specific example of this are the axes. Whereas in usual plots the axes can be tuned via the base graphics {\tt axis} selector, {\tt circlize} axes are actually created using {\tt lines}. To tune the polar axis, you can pass custom subclasses such as {\tt AXIS} to {\tt circos.Rcssaxis} and create styles of the form 
+<<rcsscirclize_appAXIS, eval=FALSE, highlight=FALSE>>=
+lines.AXIS {
+  lwd: 2;
+}
+@
+
+\noindent See the css configuration in {\tt style4.Rcss} for an example.
+
+
+\end{document}

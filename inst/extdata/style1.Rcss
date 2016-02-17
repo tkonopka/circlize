@@ -1,0 +1,123 @@
+/**
+ * Custom style 1
+ *
+ * This style definition starts with the contents of circlize.base.Rcss
+ * and then introduces add-ons and customizations
+ *
+ **/
+
+/** Settings for overall circlize chart **/
+circlize {
+  start.degree: 0;
+  gap.degree: 1;
+  track.margin: 0.01 0.01;
+  unit.circle.segments: 300;
+  cell.padding: 0.02 1 0.02 1;
+  default.track.heigh: 0.2;
+  track.height: 0.1;
+  points.overflow.warning: 1;
+  canvas.xlim: -1 1;
+  canvas.ylim: -1 1;
+  major.by.degree: 10;
+  clock.wise: 1;
+  lend: NULL;
+  ljoin: NULL;
+  bg.border: #000000;
+}
+circlize.draft {
+  unit.circle.segments: 100;
+}
+
+/** Settings tuning curved axes **/
+circlizeaxis {
+  direction: outside;
+  labels.facing: inside;
+  labels.niceFacing: 1;
+  minor.ticks: 4;
+  major.tick.percentage: 0.1;
+  labels.away.percentage: 0.05;
+  tick.length: 0.5;
+}
+
+/** Settings tuning lines/curves within sectors **/
+circlizelines {
+  type: l;
+  baseline: bottom;
+}
+
+/** Settings tuning links/curves between sectors **/
+circlizelink {
+  h: 1;
+  h2: 1;
+  w: 1;
+  w2: 1;
+  col: #000000;
+  lwd: 1;
+  lty: 1;
+  border: NA;
+  arr.length: 0.4;
+  arr.width: 0.2;
+  arr.col: #000000;
+  arr.lwd: 1;
+  arr.lty: 1;
+  arr.type: triangle;
+}
+
+/** Settings for individual regions/sectors **/
+circlizeregion {
+  bg.col: NA;
+  bg.border: #000000;
+  bg.lty: 1;
+  bg.lwd: 1;
+}
+
+/** Settings for text displayed within regions **/
+circlizetext {
+  facing: inside;
+  niceFacing: 0;
+  adj: 0.5;
+}
+
+
+/** 
+ * Custom changes to circlize-specific selectors 
+**/
+circlizelink.linkA {
+  lwd: 1;  
+}
+circlizelink.linkB {
+  col: #ff0000;
+  border: #0000ff;
+  h: 0.2;
+  h2: 0.2;
+}
+circlizelink.linkC {
+  col: #00ff00;
+  lwd: 2;
+  lty: 2;
+}
+
+
+/** 
+ * Custom changes to base graphics used within the circlize chart
+**/
+points {
+  pch: 16;
+  cex: 0.5;
+}
+points.first {
+  pch: 16;
+  cex: 0.6;
+  col: #ff0000;
+}
+points.second {
+  pch: 1;
+  cex: 0.6;
+  col: #0000ff;
+}
+text.axis {
+  cex: 1;
+}
+
+
+

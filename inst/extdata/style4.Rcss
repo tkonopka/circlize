@@ -1,0 +1,130 @@
+/**
+ * Custom style 4
+ *
+ * This style definition starts with the contents of circlize.base.Rcss
+ * and then introduces add-ons and customizations
+ *
+ **/
+
+/** Settings for overall circlize chart **/
+circlize {
+  start.degree: 22.5;
+  gap.degree: 2;
+  track.margin: 0.012 0.01;
+  unit.circle.segments: 300;
+  cell.padding: 0.02 1 0.02 1;
+  default.track.heigh: 0.2;
+  track.height: 0.12;
+  points.overflow.warning: 1;
+  canvas.xlim: -1 1;
+  canvas.ylim: -1 1;
+  major.by.degree: 10;
+  clock.wise: 1;
+  lend: NULL;
+  ljoin: NULL;
+  bg.border: #000000;
+}
+circlize.draft {
+  unit.circle.segments: 100;
+}
+
+/** Settings tuning curved axes **/
+circlizeaxis {
+  direction: outside;
+  labels.facing: inside;
+  labels.niceFacing: 1;
+  minor.ticks: 0;
+  major.tick.percentage: 0.2;
+  labels.away.percentage: 0.1;
+  tick.length: 0.7;
+}
+
+/** Settings tuning lines/curves within sectors **/
+circlizelines {
+  type: l;
+  baseline: bottom;
+}
+
+/** Settings tuning links/curves between sectors **/
+circlizelink {
+  h: 1;
+  h2: 1;
+  w: 1;
+  w2: 1;
+  col: #ccccee;
+  lwd: 1;
+  lty: 1;
+  border: NA;
+  arr.length: 0.4;
+  arr.width: 0.2;
+  arr.col: #000000;
+  arr.lwd: 1;
+  arr.lty: 1;
+  arr.type: triangle;
+}
+
+/** Settings for individual regions/sectors **/
+circlizeregion {
+  bg.col: #f0f0f0;
+  bg.border: #222299;
+  bg.lty: 1;
+  bg.lwd: 1;
+}
+
+/** Settings for text displayed within regions **/
+circlizetext {
+  facing: outside;
+  niceFacing: 0;
+  adj: 0.5;
+}
+
+
+/** 
+ * Custom changes to circlize-specific selectors 
+**/
+circlizeregion.a, circlizeregion.b {
+  bg.col: #ffdddd;
+}
+circlizeregion.c, circlizeregion.d {
+  bg.col: #ddddff;
+}
+circlizeregion.f, circlizeregion.h {
+  bg.col: #ffffff;
+}
+circlizelink.linkA {
+  lwd: 6;  
+  col: #ffdddd;
+}
+
+
+/** 
+ * Custom changes to base graphics
+ **/
+points {
+  pch: 16;
+  cex: 0.5;
+  col: #444466;
+}
+points.f, points.h {
+  cex: 0.85;
+  pch: 21;
+  lwd: 0.65;
+}
+points.first {
+  pch: 16;
+  cex: 0.6;
+  col: #ff0000;
+}
+points.second {
+  pch: 1;
+  cex: 0.6;
+  col: #0000ff;
+}
+text.axis {
+  cex: 0.8;
+}
+lines.axis {
+  lwd: 1.9;
+  col: #000000;
+}
+
