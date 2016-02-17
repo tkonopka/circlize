@@ -105,11 +105,6 @@ points {
   cex: 0.5;
   col: #444466;
 }
-points.f, points.h {
-  cex: 0.85;
-  pch: 21;
-  lwd: 0.65;
-}
 points.first {
   pch: 16;
   cex: 0.6;
