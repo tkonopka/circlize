@@ -84,9 +84,7 @@ For examples of circlize package, please visit http://jokergoo.github.io/circliz
 
 ## circlize with cascading style sheets
 
-A number of circlize functions now support css styling through Rcssplot. 
-The supported features are described in the 'Rcsscirclize' vignette.
-
-Other features such as high-level functions (e.g. histograms) and
-circos-specific functions (e.g. chords) are in progress.
+A number of circlize functions now support css styling through [Rcssplot](https://github.com/tkonopka/Rcssplot). 
+The supported features are described in the 'Rcsscirclize' vignette
+and in the Rcss.md.
 

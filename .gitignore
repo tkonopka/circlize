@@ -12,3 +12,18 @@
 
 .DS_Store
 .*
+
+
+## ignoring temporary files from emacs/knitr/tex
+
+*/*.*~
+*/*/*.*~
+*/*.tex
+*/*.aux
+*/*.log
+*/*.pdf
+*/*.out
+
+
+
+

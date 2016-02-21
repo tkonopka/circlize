@@ -66,8 +66,9 @@
 # of the plotting region can not be changed.
 #
 # Settings from selector "circlize" in Rcss object:
-#  track.height, track.margin, cell.padding, 
-# Arguments in "..." processed by circlize: bg.border, bg.col, bg.lty, bg.lwd
+#  track.height, track.margin, cell.padding,
+# Settings from selector "circlizeregions" in Rcss object:
+#  bg.border, bg.col, bg.lty, bg.lwd
 # Arguments in "..." processed by Rcssplot: 
 #
 circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim = NULL,
@@ -78,13 +79,17 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
   if(!is.circos.initialized()) {
     stop("Your circos plot has not been initialized yet!\n")
   }
-  
-  track.height = RcssGetPropertyValueOrDefault(Rcss, "circlize", "track.height", Rcssclass=Rcssclass, default=0.2)
-  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlize", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
+
+  ## get some info on tracks
+  args = list(...)
+  track.args = c("track.height", "track.margin", "cell.padding")
+  track.height = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.height", Rcssclass=Rcssclass, default=0.2)
+  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
   o.track.margin = track.margin;
-  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlize", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
+  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
   o.cell.padding = cell.padding;
-  
+  args = args[!(names(args) %in% track.args)]
+
   ## if there is no factors, default are all the available factors
   if(is.null(factors)) {
     factors = get.all.sector.index()
@@ -144,35 +149,10 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
   le = levels(factors)
   nlevel = length(le)
 
-
-  ## perhaps use col, pch, cex for track points to update Rcss
-  Rcss2 = Rcss;
-  args = list(...)
-  if (hasArg(bg.col)) {
-    bg.col = name.with.factors(args[["bg.col"]], le)
-    for (i in names(col)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="circlizeregion", Rcssclass=c(Rcssclass, i), property="bg.col", value=bg.col[i])
-    }   
-  }
-  if (hasArg(bg.border)) {
-    bg.border = name.with.factors(args[["bg.border"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="circlizeregion", Rcssclass=c(Rcssclass, i), property="bg.border", value=bg.border[i])
-    }    
-  }
-  if (hasArg(bg.lty)) {
-    bg.lty = name.with.factors(args[["bg.lty"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="circlizeregion", Rcssclass=c(Rcssclass, i), property="bg.lty", value=bg.lty[i])
-    }    
-  }
-  if (hasArg(bg.lwd)) {
-    bg.lwd = name.with.factors(args[["bg.lwd"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="circlizeregion", Rcssclass=c(Rcssclass, i), property="bg.lwd", value=bg.lwd[i])
-    }    
-  }  
-  args = args[!(names(args) %in% c("bg.col", "bg.border", "bg.lty","bg.lwd"))]
+  ## perhaps transfer some sector-specific graphics args from arguments into update Rcss
+  graphics.args = c("bg.col", "bg.border", "bg.lty", "bg.lwd")
+  Rcss2 = updateRcss(Rcss, le, args, graphics.args, "circlizeregion", Rcssclass)
+  args = args[!(names(args) %in% graphics.args)]
   ## end of Rcss object update
   
   ## whether to force ylim for all cells in a track same
@@ -189,7 +169,7 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
       y.range = matrix(unlist(y.range), ncol = 2, byrow = TRUE)
     }
   }
-  
+
   if(flag_createNewTrack) {
     if(track.index == 1) {
       track.start = 1 - o.track.margin[2];
@@ -201,7 +181,6 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
   } else {
     track.start = get.cell.meta.data("cell.top.radius", track.index = track.index)
   }
-
 
   ## check whether there is enough space for the new track and whether the new space
   ## overlap with other tracks. Only for creatation mode.
@@ -229,12 +208,11 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
       ylim2 = ylim[i, ]
     }
     
-    ## create plotting region for single cell    
-    circos.RcsscreatePlotRegion(track.start = track.start,
-                                track.height = track.height, sector.index = le[i],
-                                track.index = track.index,
-                                ylim = ylim2, 
-                                Rcss=Rcss, Rcssclass=c(Rcssclass, le[i]), args)
+    ## create plotting region for single cell
+    do.call(circos.RcsscreatePlotRegion,
+            c(list(track.start = track.start, track.height = track.height, sector.index = le[i],
+                   track.index = track.index, ylim = ylim2, 
+                   Rcss=Rcss2, Rcssclass=c(Rcssclass, le[i])), args))
     
     l = factors == le[i]
     if(!is.null(panel.fun)) {
@@ -257,14 +235,12 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
   ## and those sectors not include in factors
   le2 = setdiff(get.all.sector.index(), levels(factors))
   if(length(le2)) {
-    for(i in seq_along(le2)) {      
+    for(i in seq_along(le2)) {
       ## ylim is the most recent ``ylim2``
-      circos.RcsscreatePlotRegion(track.start = track.start,
-                                  track.height = track.height, sector.index = le2[i],
-                                  track.index = track.index,
-                                  ylim = ylim2, bg.col = NA,
-                                  bg.border = NA,
-                                  Rcss=Rcss, Rcssclass=Rcssclass, args)     
+      do.call(circos.RcsscreatePlotRegion,
+              c(list(track.start = track.start, track.height = track.height, sector.index = le2[i],
+                      track.index = track.index, ylim = ylim2, bg.col = NA, bg.border = NA,
+                      Rcss=Rcss, Rcssclass=Rcssclass), args))     
     }
   }
   
@@ -387,31 +363,32 @@ circos.RcsscreatePlotRegion = function(track.start, track.height = circos.par("t
   sector.data = get.sector.data(sector.index)
   cell.xlim = c(sector.data["min.value"], sector.data["max.value"])
   names(cell.xlim) = NULL
-
-  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlize", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
-  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlize", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
+  
+  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
+  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
   
   ## get graphics parameters from Rcss
   args = list(...);
-  if (!hasArg("bg.col")) {
+  
+  if (!hasArg(bg.col)) {
     bg.col = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.col",
       default=NA, Rcssclass=Rcssclass)
   } else {
     bg.col = args[["bg.col"]]
   }
-  if (!hasArg("bg.border")) {
+  if (!hasArg(bg.border)) {
     bg.border = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.border",
       default="#000000", Rcssclass=Rcssclass)
   } else {
     bg.border = args[["bg.border"]]
   }
-  if (!hasArg("bg.lty")) {
+  if (!hasArg(bg.lty)) {
     bg.lty = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lty",
       default=1, Rcssclass=Rcssclass)
   } else {
     bg.lty = args[["bg.lty"]]
   }
-  if (!hasArg("bg.lwd")) {
+  if (!hasArg(bg.lwd)) {
     bg.lwd = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lwd",
       default=1, Rcssclass=Rcssclass)
   } else {
@@ -549,38 +526,23 @@ circos.RcsstrackPoints = function(factors = NULL, x, y, track.index = get.cell.m
   if(length(setdiff.factors)) {
     stop(paste("Cannot find these categories in existed sectors:", paste(setdiff.factors, collapse = ", "), ".\n", sep = ""))
   }
-    
+  
   ## perhaps use col, pch, cex for track points to update Rcss
   Rcss2 = Rcss;
   args = list(...)
-  if (hasArg(col)) {
-    col = name.with.factors(args[["col"]], le)
-    for (i in names(col)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="points", Rcssclass=c(Rcssclass, i), property="col", value=col[i])
-    }   
-  }
-  if (hasArg(pch)) {
-    pch = name.with.factors(args[["pch"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="points", Rcssclass=c(Rcssclass, i), property="pch", value=pch[i])
-    }    
-  }
-  if (hasArg(cex)) {
-    cex = name.with.factors(args[["cex"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="points", Rcssclass=c(Rcssclass, i), property="cex", value=cex[i])
-    }    
-  }
-  args = args[!(names(args) %in% c("col","pch","cex"))]
+  graphics.args = c("col", "pch", "cex", "lwd")
+  Rcss2 = updateRcss(Rcss2, le, args, graphics.args, "points", Rcssclass)
+  args = args[!(names(args) %in% graphics.args)]    
   ## end of Rcss object update
-
+  
   ## set these graphic parameters with same length as the factors  
   for(i in seq_along(le)) {
     l = factors == le[i]    
     nx = x[l]
     ny = y[l]
-    circos.Rcsspoints(nx, ny, sector.index = le[i], track.index = track.index,
-                      Rcss=Rcss2, Rcssclass=c(Rcssclass, le[i]), args)    
+    do.call(circos.Rcsspoints,
+            c(list(x=nx, y=ny, sector.index = le[i], track.index = track.index,
+                   Rcss=Rcss2, Rcssclass=c(Rcssclass, le[i])), args))    
   }
   return(invisible(NULL))
 }
@@ -620,19 +582,19 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
   
   ## replace function arguments by Rcss lookup
   args = list(...)
-  if (!hasArg("type")) {
+  if (!hasArg(type)) {
     type = RcssGetPropertyValueOrDefault(Rcss, "circlizelines", "type", default="l", Rcssclass=Rcssclass)
   } else {
     type = args[["type"]]
   }
-  if (!hasArg("baseline")) {
+  if (!hasArg(baseline)) {
     baseline = RcssGetPropertyValueOrDefault(Rcss, "circlizelines", "baseline", default="bottom", Rcssclass=Rcssclass)
   }  else {
     baseline = args[["baseline"]]
   }
   args = args[!(names(args) %in% c("type","baseline"))]
   ## end of Rcss lookup
-  
+
   if(length(x) != length(y)) {
     stop("Length of x and y differ.\n")
   }
@@ -646,16 +608,19 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
   if(type == "l") {
     
   } else if(type == "o") {
-    circos.Rcsspoints(x, y, sector.index = sector.index, track.index = track.index,
-                      Rcss=Rcss, Rcssclass=Rcssclass, args)
-    circos.Rcsslines(x, y, sector.index = sector.index, track.index = track.index,
-                     straight=FALSE, area=area, Rcss=Rcss, Rcssclass=Rcssclass, args)
+    do.call(circos.Rcsspoints,
+            c(list(x=x, y=y, sector.index = sector.index, track.index = track.index,
+                   Rcss=Rcss, Rcssclass=Rcssclass), args))
+    do.call(circos.Rcsslines,
+            c(list(x=x, y=y, sector.index = sector.index, track.index = track.index,
+                   straight=FALSE, area=area, Rcss=Rcss, Rcssclass=Rcssclass), args))
     return(invisible(NULL))
   } else if(type == "h") {
     for(i in seq_along(x)) {
-      circos.Rcsslines(c(x[i], x[i]), c(baseline, y[i]),
-                   sector.index = sector.index, track.index = track.index,
-                   Rcss=Rcss, Rcssclass=Rcssclass, straight=TRUE, area=FALSE, args)
+      do.call(circos.Rcsslines,
+              c(list(x=c(x[i], x[i]), y=c(baseline, y[i]),
+                      sector.index = sector.index, track.index = track.index,
+                      Rcss=Rcss, Rcssclass=Rcssclass, straight=TRUE, area=FALSE), args))
     }
     return(invisible(NULL))
   } else if(type == "s") {
@@ -672,11 +637,13 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
       ylim = get.cell.meta.data("ylim", sector.index, track.index)
       d = rbind(d, c(d[nrow(d), 1], baseline))
       d = rbind(d, c(d[1, 1], baseline))
-      circos.Rcsspolygon(d[, 1], d[, 2], sector.index = sector.index, track.index = track.index,
-                         Rcss=Rcss, Rcssclass=Rcssclass, args);
+      do.call(circos.Rcsspolygon,
+              c(list(x=d[, 1], y=d[, 2], sector.index = sector.index, track.index = track.index,
+                     Rcss=Rcss, Rcssclass=Rcssclass), args));
     } else {
-      circos.Rcsslines(d[, 1], d[, 2], sector.index = sector.index, track.index = track.index,
-                       Rcss=Rcss, Rcssclass=Rcssclass, straight=TRUE, area=FALSE, args)
+      do.call(circos.Rcsslines,
+              c(list(x=d[, 1], y=d[, 2], sector.index = sector.index, track.index = track.index,
+                     Rcss=Rcss, Rcssclass=Rcssclass, straight=TRUE, area=FALSE), args))
     }
     return(invisible(NULL))
   }
@@ -698,15 +665,16 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
     ylim = get.cell.meta.data("ylim", sector.index, track.index)
     d = rbind(d, c(d[nrow(d), 1], baseline))
     d = rbind(d, c(d[1, 1], baseline))
-    circos.Rcsspolygon(d[, 1], d[, 2], sector.index = sector.index, track.index = track.index,
-                       Rcss=Rcss, Rcssclass=Rcssclass, args)
+    do.call(circos.Rcsspolygon,
+            c(list(x=d[, 1], y=d[, 2], sector.index = sector.index, track.index = track.index,
+                   Rcss=Rcss, Rcssclass=Rcssclass), args))
     return(invisible(NULL))
   }
   
   d2 = circlize(d[, 1], d[, 2], sector.index, track.index)
-
+  
   d2polar = polar2Cartesian(d2)
-  Rcsslines(d2polar[,1], d2polar[,2], type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
+  do.call(Rcsslines, c(list(x=d2polar[,1], y=d2polar[,2], type="l", Rcss=Rcss, Rcssclass=Rcssclass), args))
   return(invisible(NULL))
 }
 
@@ -759,14 +727,24 @@ circos.RcsstrackLines = function(factors, x, y, track.index = get.cell.meta.data
   ## set these graphic parameters with same length as the factors
   area = recycle.with.levels(area, le)
   baseline = recycle.with.levels(baseline, le)
-    
+  
+  ## perhaps use col, pch, cex, lwd for track lines to update Rcss
+  Rcss2 = Rcss;  
+  args = list(...)
+  graphics.args = c("col", "pch", "cex", "lwd", "lty", "pt.col")
+  Rcss2 = updateRcss(Rcss2, le, args, graphics.args, "lines", Rcssclass)
+  args = args[!(names(args) %in% graphics.args)]
+  ## end of Rcss object update
+  
   for(i in seq_along(le)) {
     l = factors == le[i]
     nx = x[l]
     ny = y[l]
-    circos.Rcsslines(nx, ny, sector.index = le[i],
-                     track.index = track.index, area = area[i], baseline = baseline[i], straight = straight,
-                     Rcss=Rcss, Rcssclass=c(Rcssclass, le[i]), ...)
+    do.call(circos.Rcsslines,
+            c(list(x=nx, y=ny, sector.index = le[i],
+                   track.index = track.index, 
+                   straight = straight, area = area[i], baseline=baseline[i],
+                   Rcss=Rcss2, Rcssclass=c(Rcssclass, le[i])), args))
   }
   return(invisible(NULL))
 }
@@ -890,7 +868,7 @@ circos.Rcsssegments = function(x0, y0, x1, y1, sector.index = get.cell.meta.data
     stop("x0, y0, x1, y1 should have same length.")
   }  
   
-  if (!hasArg("type")) {
+  if (!hasArg(type)) {
     type = "l"
   } else {
     type = list(...)[["type"]]
@@ -940,20 +918,20 @@ circos.Rcsssegments = function(x0, y0, x1, y1, sector.index = get.cell.meta.data
 circos.Rcsstext = function(x, y, labels, sector.index = get.cell.meta.data("sector.index"),
   track.index = get.cell.meta.data("track.index"),  
   Rcss="default", Rcssclass=c(), ...) {  
-
+  
   ## replace arguments by lookup in Rcss object
   args = list(...)  
-  if (!hasArg("facing")) {
+  if (!hasArg(facing)) {
     facing = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "facing", default="inside", Rcssclass=Rcssclass)
   } else {
     facing = args[["facing"]]
   }
-  if (!hasArg("niceFacing")) {
+  if (!hasArg(niceFacing)) {
     niceFacing = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "niceFacing", default=FALSE, Rcssclass=Rcssclass)
   } else {
     niceFacing = args[["niceFacing"]]
   }
-  if (!hasArg("adj")) {
+  if (!hasArg(adj)) {
     adj = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "adj", default=0.5, Rcssclass=Rcssclass)
   } else {
     adj = args[["adj"]]
@@ -1025,13 +1003,15 @@ circos.Rcsstext = function(x, y, labels, sector.index = get.cell.meta.data("sect
       }
     }
     if(sum(l1)) {
-      circos.Rcsstext(x[l1], y[l1], labels[l1], sector.index = sector.index,
-                      track.index = track.index, facing = facing1, niceFacing = FALSE, adj = adj1, Rcss=Rcss, Rcssclass=Rcssclass, args)
+      do.call(circos.Rcsstext,
+              c(list(x=x[l1], y=y[l1], labels=labels[l1], sector.index = sector.index,
+                     track.index = track.index, facing = facing1, niceFacing = FALSE, adj = adj1, Rcss=Rcss, Rcssclass=Rcssclass), args))
     }
     
     if(sum(l2)) {
-      circos.Rcsstext(x[l2], y[l2], labels[l2], sector.index = sector.index,
-                      track.index = track.index, facing = facing2, niceFacing = FALSE, adj = adj2, Rcss=Rcss, Rcssclass=Rcssclass, args)
+      do.call(circos.Rcsstext,
+              c(list(x=x[l2], y=y[l2], labels=labels[l2], sector.index = sector.index,
+                     track.index = track.index, facing = facing2, niceFacing = FALSE, adj = adj2, Rcss=Rcss, Rcssclass=Rcssclass), args))
     }
     return(invisible(NULL))
   } 
@@ -1067,11 +1047,13 @@ circos.Rcsstext = function(x, y, labels, sector.index = get.cell.meta.data("sect
       dr = reverse.circlize(theta, rep(rou, length(theta)), sector.index, track.index)
       
       if(facing == "bending.inside") {
-        circos.Rcsstext(dr[, 1], dr[, 2], labels = chars[[i]], sector.index = sector.index, track.index = track.index, facing = "inside", adj = c(0.5, 0),
-                        Rcss=Rcss, Rcssclass=Rcssclass, args)
+        do.call(circos.Rcsstext,
+                c(list(x=dr[, 1], y=dr[, 2], labels = chars[[i]], sector.index = sector.index, track.index = track.index, facing = "inside", adj = c(0.5, 0),
+                       Rcss=Rcss, Rcssclass=Rcssclass), args))
       } else if(facing == "bending.outside") {
-        circos.Rcsstext(dr[, 1], dr[, 2], labels = chars[[i]], sector.index = sector.index, track.index = track.index, facing = "outside", adj = c(0.5, 1),
-                        Rcss=Rcss, Rcssclass=Rcssclass, args)
+        do.call(circos.Rcsstext,
+                c(list(x=dr[, 1], y=dr[, 2], labels = chars[[i]], sector.index = sector.index, track.index = track.index, facing = "outside", adj = c(0.5, 1),
+                       Rcss=Rcss, Rcssclass=Rcssclass), args))
       }
     }
     
@@ -1091,7 +1073,8 @@ circos.Rcsstext = function(x, y, labels, sector.index = get.cell.meta.data("sect
     
     m = polar2Cartesian(d)
     for(i in seq_along(x)) {
-      Rcsstext(m[i, 1], m[i, 2], labels = labels[i], srt = srt[i], adj = adj, Rcss=Rcss, Rcssclass=Rcssclass, args)
+      do.call(Rcsstext,
+              c(list(x=m[i, 1], y=m[i, 2], labels = labels[i], srt = srt[i], adj = adj, Rcss=Rcss, Rcssclass=Rcssclass), args))
     }
   }
 
@@ -1145,28 +1128,12 @@ circos.RcsstrackText = function(factors, x, y, labels, track.index = get.cell.me
   
   ## use graphical settings to update Rcss object
   Rcss2 = Rcss;
-  args = list(...)  
-  if (hasArg(cex)) {
-    cex = name.with.factors(args[["cex"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="text", Rcssclass=c(Rcssclass, i), property="cex", value=cex[i])
-    }    
-  }
-  if (hasArg(col)) {
-    col = name.with.factors(args[["col"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="text", Rcssclass=c(Rcssclass, i), property="col", value=col[i])
-    }    
-  }
-  if (hasArg(font)) {
-    font = name.with.factors(args[["font"]], le)
-    for (i in seq_along(le)) {
-      Rcss2 = RcssChangePropertyValue(Rcss2, selector="text", Rcssclass=c(Rcssclass, i), property="font", value=font[i])
-    }    
-  }
-  args = args[!(names(args) %in% c("cex", "col", "font"))]
+  args = list(...)
+  graphics.args = c("cex", "col", "font")
+  Rcss2 = updateRcss(Rcss2, le, args, graphics.args, "text", Rcssclass)  
+  args = args[!(names(args) %in% graphics.args)]
   ## end of update of Rcss object
-      
+  
   for(i in seq_along(le)) {
     l = factors == le[i]
     nx = x[l]
@@ -1213,36 +1180,38 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
 
   ## replace function arguments by lookup in Rcssplot object
   args = list(...)
-  if (!hasArg("labels.facing")) {
+  if (!hasArg(labels.facing)) {
     labels.facing = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "labels.facing", default="inside", Rcssclass=Rcssclass)
   } else {
     labels.facing = args[["labels.facing"]]
   }
-  if (!hasArg("minor.ticks")) {
+  if (!hasArg(minor.ticks)) {
     minor.ticks = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "minor.ticks", default=4, Rcssclass=Rcssclass)
   } else {
     minor.ticks = args[["minor.ticks"]]
   }
-  if (!hasArg("labels.niceFacing")) {
+  if (!hasArg(labels.niceFacing)) {
     labels.niceFacing = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "labels.niceFacing", default=TRUE, Rcssclass=Rcssclass)
   } else {
     labels.niceFacing = args[["labels.niceFacing"]]
   }
-  if (!hasArg("major.tick.percentage")) {
+  if (!hasArg(major.tick.percentage)) {
     major.tick.percentage = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "major.tick.percentage", default=0.1, Rcssclass=Rcssclass);
   } else {
     major.tick.percentage = args[["major.tick.percentage"]]
   }
-  if (!hasArg("labels.away.percentage")) {
+  if (!hasArg(labels.away.percentage)) {
     labels.away.percentage = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis",
       "labels.away.percentage", default=major.tick.percentage/2, Rcssclass=Rcssclass);
+  } else {
+    labels.away.percentage = args[["labels.away.percentage"]]
   }
-  if (!hasArg("major.tick")) {
+  if (!hasArg(major.tick)) {
     major.tick =  RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "major.tick", default=1, Rcssclass=Rcssclass);
   } else {
     major.tick = args[["major.tick"]]
   }
-  if (!hasArg("direction")) {
+  if (!hasArg(direction)) {
     direction = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "direction", default="outside", Rcssclass=Rcssclass)
   } else {
     direction = args[["direction"]]
@@ -1299,7 +1268,7 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
     circos.Rcsssegments(major.at[l], rep(h, sum(l)), major.at[l], rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1), straight = TRUE,
                         sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
   }
-
+  
   labels.adj = NULL
   if(direction == "outside") {
     if(labels.facing == "inside") {
@@ -1417,12 +1386,12 @@ circos.Rcssyaxis = function(side = c("left", "right"), at = NULL, labels = TRUE,
   
   ## replace arguments by lookup in Rcss object
   args = list(...)  
-  if (!hasArg("labels.niceFacing")) {
+  if (!hasArg(labels.niceFacing)) {
     labels.niceFacing = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "labels.niceFacing", default=TRUE, Rcssclass=Rcssclass)
   } else {
     labels.niceFacing = args[["labels.niceFacing"]]
   }
-  if (!hasArg("tick.length")) {
+  if (!hasArg(tick.length)) {
     tick.length = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "tick.length", default=0.5, Rcssclass=Rcssclass)
   } else {
     tick.length = args[["tick.length"]]

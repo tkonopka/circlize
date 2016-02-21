@@ -112,7 +112,7 @@ custom.plot.base(a, col=pcols)
 \noindent Although the modification is noticable, it is rather limited and we might want to do further tuning. However, settings other than point color are not easily accessible to the user. Implementing more features thus requires re-writing the custom plot function: either by hard-coding other settings within the function, or by adding further custom arguments to the function definition. Neither approach is ideal because each mixes code that presumably captures an analysis of the data together with decisions that affect only the presentation.
 
 
-<<rcsscirclize_demo1, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.3\\textheight", fig.width = 7, fig.height = 3.5, fig.cap = "Styling of {\\tt circlize} charts. (A) A starting style defined in function {\\tt custom.plot.base} (B) Another plot of the same data produced by {\\tt custom.plot.base} with explicit change of colors. ">>=
+<<rcsscirclize_demo1, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.3\\textheight", fig.width = 7, fig.height = 3.5, fig.cap = "Styling of \textbf{circlize} charts. (A) A starting style defined in function {\\tt custom.plot.base} (B) Another plot of the same data produced by {\\tt custom.plot.base} with explicit change of colors. ">>=
 par(mfrow = c(1, 2), mar = c(1, 1, 1, 1))
 <<circlize_fun_base>>  
   <<rcsscirclize_1A>>
@@ -225,7 +225,7 @@ custom.plot.rcss(a, col=pcols[c("f","h")], Rcss=mycss[[4]])
 \noindent An interesting capability demonstrated in this example is an interaction between css- and user-specified styles. The points in the outer track are styled in a gray color through the css. The user call to the function overrides the colors for two sectors via the explicit reference to {\tt col}.
 
 
-<<rcsscirclize_demo2, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.6\\textheight", fig.width = 7, fig.height = 7, fig.cap = "Styling of {\\tt circlize} charts using cascading style sheets. (A-D) Charts produced by {\\tt custom.plot.rcss} with four different {\\tt Rcss} style objects.">>=
+<<rcsscirclize_demo2, echo = FALSE, out.width = "0.6\\textheight", out.height = "0.6\\textheight", fig.width = 7, fig.height = 7, fig.cap = "Styling of \textbf{circlize} charts using cascading style sheets. (A-D) Charts produced by {\\tt custom.plot.rcss} with four different {\\tt Rcss} style objects.">>=
 par(mfrow = c(2, 2), mar = c(1, 1, 1, 1))
 <<circlize_fun_rcss>>   
 <<rcsscirclize_2A>>

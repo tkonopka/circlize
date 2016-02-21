@@ -20,33 +20,31 @@
 # -x            Data on the x-axis
 # -track.index  Index for the track which is going to be updated. Setting it to ``NULL`` means
 #               creating the plotting regions in the next newest track.
-# -track.height Height of the track. It is the percentage to the radius of the unit circle.
-#               If to update a track, this argument is disabled.
 # -force.ylim   Whether to force all cells in the track to share the same ``ylim``. Btw, ``ylim`` is calculated automatically.
-# -col          Filled color for histogram
-# -border       Border color for histogram
-# -lty          Line style for histogram
-# -lwd          Line width for histogram
-# -bg.col       Background color for the plotting regions
-# -bg.border    Color for the border of the plotting regions
-# -bg.lty       Line style for the border of the plotting regions
-# -bg.lwd       Line width for the border of the plotting regions
 # -breaks       see `graphics::hist`
 # -include.lowest see `graphics::hist`
 # -right          see `graphics::hist`
 # -draw.density   whether draw density lines instead of histogram bars.
+# -Rcss             Rcss style object
+# -Rcssclass        sub class for style sheet
+# -...              Further graphical parameters (see details)
 # 
 # == details
 # It draw histogram in cells among a whole track. It is also an example to show how to add self-defined
 # high-level graphics by this package.
-circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.height"),
-  track.index = NULL, force.ylim = TRUE, col = ifelse(draw.density, "black", NA),
-  border = "black", lty = par("lty"), lwd = par("lwd"),
-  bg.col = NA, bg.border = "black", bg.lty = par("lty"), bg.lwd = par("lwd"),
-  breaks = "Sturges", include.lowest = TRUE, right = TRUE, draw.density = FALSE) {
+#
+# Settings from selector "circlize" in Rcss object:
+#    track.height
+# Settings from selector "circlizeregions" in Rcss object:
+##   bg.col, bg.border, bg.lty, bg.lwd
+# Arguments in "..." processed by Rcssplot:
+#    col, lwd, lty, border
+#
+circos.RcsstrackHist = function(factors, x, 
+  track.index = NULL, force.ylim = TRUE,
+  breaks = "Sturges", include.lowest = TRUE, right = TRUE, draw.density = FALSE,
+  Rcss="default", Rcssclass=c(), ...) {
 
-  warning("Rcss features not implemented yet")
-  
   ## basic check here
   if(length(x) != length(factors)) {
     stop("Length of data and length of factors differ.\n")
@@ -55,13 +53,13 @@ circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.hei
   if(!is.factor(factors)) {
     factors = factor(factors)
   }
-  
+
   ## check whether there are some categories that are not in the circle
   setdiff.factors = setdiff(levels(factors), get.all.sector.index())
   if(length(setdiff.factors)) {
     stop(paste("Cannot find these categories in existed sectors:", paste(setdiff.factors, collapse = ", "), ".\n", sep = ""))
   }
-  
+
   ## calculate the distributions
   le = levels(factors)
   
@@ -84,12 +82,17 @@ circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.hei
     
     fa = c(fa, rep(le[i], length(h$breaks)))
   }
+
+  ## extract settings for regions
+  args = list(...)
+  regions.args = c("track.height", "bg.col", "bg.font", "bg.lty", "bg.lwd")
+  args = args[names(args) %in% regions.args]
   
   ## create the plotting region
-  circos.trackPlotRegion(factors = fa, y=yy, track.height = track.height,
-                         track.index = track.index, force.ylim = force.ylim,
-                         bg.col = bg.col, bg.border = bg.border, bg.lty = bg.lty, bg.lwd = bg.lwd)
-  
+  do.call(circos.RcsstrackPlotRegion,
+          c(list(factors = fa, y=yy,
+                 track.index = track.index, force.ylim = force.ylim,  
+                 Rcss=Rcss, Rcssclass=Rcssclass), args))
   track.index = get.current.track.index()
   
   l3 = logical(0)
@@ -103,16 +106,24 @@ circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.hei
   xx = xx[l3]
   yy = yy[l3]
   fa = fa[l3]
+
+  ## remove graphical settings for tracks 
+  args = list(...)
+  args = args[!(names(args) %in% regions.args)]
+  ## shift graphical settings for rectangles into the Rcss for polygons
+  Rcss2 = Rcss;
+  graphics.args = c("col", "border", "lty", "lwd")
+  Rcss2 = updateRcss(Rcss2, le, args, graphics.args, "polygon", Rcssclass)
+  Rcss2 = updateRcss(Rcss2, le, args, graphics.args, "lines", Rcssclass)  
+  args = args[!(names(args) %in% graphics.args)] 
+  ## end of update of Rcss object
   
   if(draw.density) {
-    circos.trackLines(factors = fa, xx, yy, track.index = track.index,
-                      col = col, lty = lty, lwd = lwd)
+    do.call(circos.RcsstrackLines,
+            c(list(factors = fa, x=xx, y=yy, track.index = track.index,
+                   Rcss=Rcss, Rcssclass=Rcssclass), args))
   } else {
     ## in each cell, draw rectangles
-    col = recycle.with.levels(col, le)
-    border = recycle.with.levels(border, le)
-    lty = recycle.with.levels(lty, le)
-    lwd = recycle.with.levels(lwd, le)
     for(i in seq_along(le)) {
       l = fa == le[i]
       
@@ -128,9 +139,10 @@ circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.hei
           next
         }
         
-        circos.rect(nx[j-1], 0, nx[j], ny[j],
-                    sector.index = le[i], track.index = track.index,
-                    col = col[i], border = border[i], lty = lty[i], lwd = lwd[i])
+        do.call(circos.Rcssrect,
+                c(list(xleft=nx[j-1], ybottom=0, xright=nx[j], ytop=ny[j],
+                       sector.index = le[i], track.index = track.index,
+                       Rcss=Rcss, Rcssclass=c(Rcssclass, le[i])), args))
       }
     }
   }
@@ -149,18 +161,24 @@ circos.RcsstrackHist = function(factors, x, track.height = circos.par("track.hei
 # -rou2           Radius for the other arc in the sector
 # -center         Center of the circle
 # -clock.wise     The direction from ``start.degree`` to ``end.degree``
-# -col            Filled color
-# -border         Border color
-# -lwd            Line width
-# -lty            Line style
+# -Rcss           Rcss style object
+# -Rcssclass      sub class for style sheet
+# -...            Further graphical parameters (see details)
 #
 # == details
 # If the interval between ``start`` and ``end`` (larger or equal to 360 or smaller or equal to -360)
 # it would draw a full circle or ring. If ``rou2`` is set, it would draw part of a ring.
 #
+# Settings from selector "circlize" in Rcss object:
+#  
+# Settings from selector "circlizeregions" in Rcss object:
+## 
+# Arguments in "..." processed by Rcssplot:
+#    col, lwd, lty, border
+
 draw.Rcsssector = function(start.degree = 0, end.degree = 360, rou1 = 1, rou2 = NULL,
-  center = c(0, 0), clock.wise = TRUE, col = NA, border = "black", lwd = par("lwd"), 
-  lty = par("lty")) {
+  center = c(0, 0), clock.wise = TRUE, 
+  Rcss="default", Rcssclass=c(), ...) {
 
   warning("Rcss features not implemented yet")
   
@@ -231,7 +249,7 @@ draw.Rcsssector = function(start.degree = 0, end.degree = 360, rou1 = 1, rou2 = 
     ## and shift to the center
     m[, 1] = m[, 1] + center[1]
     m[, 2] = m[, 2] + center[2]
-    polygon(m, col = col, border = border, lwd = lwd, lty = lty)
+    Rcsspolygon(m, Rcss=Rcss, Rcssclass=Rcssclass, ...)
   } else {
     m1 = polar2Cartesian(d1)
     m2 = polar2Cartesian(d2)
@@ -241,19 +259,17 @@ draw.Rcsssector = function(start.degree = 0, end.degree = 360, rou1 = 1, rou2 = 
       
       m[, 1] = m[, 1] + center[1]
       m[, 2] = m[, 2] + center[2]
-      polygon(m, col = col, border = NA, lwd = 0.1)
+      Rcsspolygon(m[,1], m[,2], Rcss=Rcss, Rcssclass=Rcssclass, ...)
       ## two borders
-      ##lines(m1[, 1]+center[1], m1[, 2]+center[2], col = "white", lwd = lwd, lty = 1)
-      ##lines(m2[, 1]+center[1], m2[, 2]+center[2], col = "white", lwd = lwd, lty = 1)
-      lines(m1[, 1]+center[1], m1[, 2]+center[2], col = border, lwd = lwd, lty = lty)
-      lines(m2[, 1]+center[1], m2[, 2]+center[2], col = border, lwd = lwd, lty = lty)
+      Rcsslines(m1[, 1]+center[1], m1[, 2]+center[2], Rcss=Rcss, Rcssclass=Rcssclass, ...)
+      Rcsslines(m2[, 1]+center[1], m2[, 2]+center[2], Rcss=Rcss, Rcssclass=Rcssclass, ...)
       
     } else {
       m = rbind(m1, m2)
       
       m[, 1] = m[, 1] + center[1]
       m[, 2] = m[, 2] + center[2]
-      polygon(m, col = col, border = border, lwd = lwd, lty = lty)
+      Rcsspolygon(m[,1], m[,2], Rcss=Rcss, Rcssclass=Rcssclass, ...)
     }
     
   } 
@@ -277,7 +293,10 @@ draw.Rcsssector = function(start.degree = 0, end.degree = 360, rou1 = 1, rou2 = 
 # -text text added in the highlight region, only support plotting one string at a time
 # -text.vjust adjustment on 'vertical' (radical) direction
 # -text.col color for the text
-# -... pass to `circos.text`
+# -Rcss             Rcss style object
+# -Rcssclass        sub class for style sheet
+# -...              Further graphical parameters (see details)
+#                   (old: pass to `circos.text`)
 #
 # == details
 # You can use `circos.info` to find out index for all sectors and all tracks.
@@ -286,7 +305,8 @@ draw.Rcsssector = function(start.degree = 0, end.degree = 360, rou1 = 1, rou2 = 
 highlight.Rcsssector = function(sector.index, track.index = get.all.track.index(), 
   col = "#FF000040", border = NA, lwd = par("lwd"), lty = par("lty"),
   padding = c(0, 0, 0, 0), text = NULL, text.col = par("col"), 
-  text.vjust = 0.5, ...) {
+  text.vjust = 0.5,
+  Rcss="default", Rcssclass=c(), ...) {
 
   warning("Rcss features not implemented yet")
   
@@ -372,17 +392,23 @@ highlight.Rcsssector = function(sector.index, track.index = get.all.track.index(
 # -facing Is the dendromgrams facing inside to the circle or outside.
 # -max_height Maximum height of the dendrogram. This is important if more than one dendrograms
 #             are drawn in one track and making them comparable.
+# -Rcss             Rcss style object
+# -Rcssclass        sub class for style sheet
+# -...              Further graphical parameters (see details)
 #
 # == details
 # Assuming there are ``n`` nodes in the dendrogram, the positions for leaves on x-axis is ``0.5, 1.5, ..., n - 0.5``.
 # So you must be careful with ``xlim`` when you initialize the cirular layout.
 #
-# You can use the ``dendextend`` package to render the dendrograms.
+# You can use the ``dendextend`` package to render the dendrograms. (Is this still true with Rcss?)
+#
+# Using Rcss objects:
+# Style lines using subclasses "edge1" and "edge2"
+# Style points using subclasses "branch", "leaf1", "leaf2"
 # 
-circos.Rcssdendrogram = function(dend, facing = c("outside", "inside"), max_height = NULL) {
+circos.Rcssdendrogram = function(dend, facing = c("outside", "inside"), max_height = NULL,
+ Rcss="default", Rcssclass=c(), ... ) {
 
-  warning("Rcss features not implemented yet")
-  
   facing = match.arg(facing)[1]
   
   if(is.null(max_height)) {
@@ -396,14 +422,6 @@ circos.Rcssdendrogram = function(dend, facing = c("outside", "inside"), max_heig
     } else {
       leaf
     }
-  }
-  
-  lines_par = function(col = par("col"), lty = par("lty"), lwd = par("lwd"), ...) {
-    return(list(col = col, lty = lty, lwd = lwd))
-  }
-  
-  points_par = function(col = par("col"), pch = par("pch"), cex = par("cex"), ...) {
-    return(list(col = col, pch = pch, cex = cex))
   }
   
   draw.d = function(dend, max_height, facing = "outside", max_width = 0) {
@@ -427,61 +445,22 @@ circos.Rcssdendrogram = function(dend, facing = c("outside", "inside"), max_heig
     }
     y2 = attr(d2, "height")
     
-    ## graphic parameter for current branch
-    ## only for lines, there are lwd, col, lty
-    edge_par1 = do.call("lines_par", as.list(attr(d1, "edgePar")))  # as.list to convert NULL to list()
-    edge_par2 = do.call("lines_par", as.list(attr(d2, "edgePar")))
-    node_par = attr(dend, "nodePar")
-    if(!is.null(node_par)) node_par = do.call("points_par", as.list(attr(dend, "nodePar")))
-    
-    ## plot the connection line
-    if(facing == "outside") {
-      circos.lines(c(x1, x1), max_height - c(y1, height), col = edge_par1$col, lty = edge_par1$lty, lwd = edge_par1$lwd, straight = TRUE)
-      circos.lines(c(x1, (x1+x2)/2), max_height - c(height, height), col = edge_par1$col, lty = edge_par1$lty, lwd = edge_par1$lwd)
-      circos.lines(c(x2, x2), max_height - c(y2, height), col = edge_par2$col, lty = edge_par2$lty, lwd = edge_par2$lwd, straight = TRUE)
-      circos.lines(c(x2, (x1+x2)/2), max_height - c(height, height), col = edge_par2$col, lty = edge_par2$lty, lwd = edge_par2$lwd)
-      if(!is.null(node_par)) {
-        circos.points((x1+x2)/2, max_height - height, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-      }
-    } else if(facing == "inside") {
-      circos.lines(c(x1, x1), c(y1, height), col = edge_par1$col, lty = edge_par1$lty, lwd = edge_par1$lwd, straight = TRUE)
-      circos.lines(c(x1, (x1+x2)/2), c(height, height), col = edge_par1$col, lty = edge_par1$lty, lwd = edge_par1$lwd)
-      circos.lines(c(x2, x2), c(y2, height), col = edge_par2$col, lty = edge_par2$lty, lwd = edge_par2$lwd, straight = TRUE)
-      circos.lines(c(x2, (x1+x2)/2), c(height, height), col = edge_par2$col, lty = edge_par2$lty, lwd = edge_par2$lwd)
-      if(!is.null(node_par)) {
-        circos.points((x1+x2)/2, height, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-      }
-    }
+    ## plot the connection line and branch points    
+    circos.Rcsslines(c(x1, x1), max_height - c(y1, height), straight = TRUE, Rcss=Rcss, Rcssclass=c(Rcssclass, "eddge1"), ...)
+    circos.Rcsslines(c(x1, (x1+x2)/2), max_height - c(height, height), straight=FALSE, Rcss=Rcss, Rcssclass=c(Rcssclass, "edge1"), ...)
+    circos.Rcsslines(c(x2, x2), max_height - c(y2, height), straight = TRUE, Rcss=Rcss, Rcssclass=c(Rcssclass, "edge2"), ...)
+    circos.Rcsslines(c(x2, (x1+x2)/2), max_height - c(height, height), straigh=FALSE, Rcss=Rcss, Rcssclass=c(Rcssclass, "edge2"), ...)      
+    circos.Rcsspoints((x1+x2)/2, max_height - height, Rcss=Rcss, Rcssclass=c(Rcssclass, "branch"), ...)      
     
     ## do it recursively
     if(is.leaf(d1)) {
-      node_par = attr(d1, "nodePar")
-      if(!is.null(node_par)) node_par = do.call("points_par", as.list(attr(d1, "nodePar")))
-      if(facing == "outside") {
-        if(!is.null(node_par)) {
-          circos.points(x1, max_height, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-        }
-      } else if(facing == "inside") {
-        if(!is.null(node_par)) {
-          circos.points(x1, 0, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-        }
-      }
+      circos.Rcsspoints(x1, max_height, Rcss=Rcss, Rcssclass=c(Rcssclass,"leaf1"), ...) 
     } else {
       draw.d(d1, max_height, facing, max_width)
     }
     
     if(is.leaf(d2)) {
-      node_par = attr(d2, "nodePar")
-      if(!is.null(node_par)) node_par = do.call("points_par", as.list(attr(d2, "nodePar")))
-      if(facing == "outside") {
-        if(!is.null(node_par)) {
-          circos.points(x2, max_height, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-        }
-      } else if(facing == "inside") {
-        if(!is.null(node_par)) {
-          circos.points(x2, 0, col = node_par$col, pch = node_par$pch, cex = node_par$cex)
-        }
-      }
+      circos.Rcsspoints(x2, max_height, Rcss=Rcss, Rcssclass=c(Rcssclass, "leaf2"), ...) 
     } else {
       draw.d(d2, max_height, facing, max_width)
     }

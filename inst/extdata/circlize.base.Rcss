@@ -6,11 +6,8 @@
 circlize {
   start.degree: 0;
   gap.degree: 1;
-  track.margin: 0.01 0.01;
   unit.circle.segments: 500;
-  cell.padding: 0.02 1 0.02 1;
   default.track.heigh: 0.2;
-  track.height: 0.1;
   points.overflow.warning: 1;
   canvas.xlim: -1 1;
   canvas.ylim: -1 1;
@@ -43,8 +40,8 @@ circlizelines {
 
 /** Settings tuning links/curves between sectors **/
 circlizelink {
-  h: NULL;
-  h2: NULL;
+  h: 1;
+  h2: 1;
   w: 1;
   w2: 1;
   col: #000000;
@@ -61,6 +58,9 @@ circlizelink {
 
 /** Settings for individual regions/sectors **/
 circlizeregion {
+  track.height: 0.1;
+  track.margin: 0.01 0.01;
+  cell.padding: 0.02 1 0.02 1;
   bg.col: NA;
   bg.border: #000000;
   bg.lty: 1;
