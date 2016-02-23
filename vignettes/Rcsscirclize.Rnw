@@ -300,10 +300,18 @@ This appendix summarizes the custom selectors used by various \textbf{circlize} 
 Note that adding settings into these selectors will produce css files that will parse without error, but will not affect plotting. To customize other aspects of circlize plots, use the css selectors corresponding to base graphics (see end of the appendix)
 
 
+\subsection{`chorddiagram'}
+
+The {\tt chorddiagram} selector controls the appearance of chord diagrams. 
+
+<<<rcsscirclize_appchorddiagram, eval=TRUE>>=
+printRcss(base.rcss, "chorddiagram")
+@ 
+
 
 \subsection{`circlize'}
 
-The \textbf{circlize} selector tunes the look of the overall circlize chart. These options include heights of tracks, angles, etc.
+The {\tt circlize} selector tunes the look of the overall circlize chart. These options include heights of tracks, angles, etc.
 
 <<rcsscirclize_appcirclize, eval=TRUE>>=
 printRcss(base.rcss, "circlize")
@@ -364,7 +372,9 @@ printRcss(base.rcss, "circlizetext")
 
 \textbf{circlize} functions use base graphics to place graphical components onto charts. Many features of the charts can thus be tuned through the base graphics selectors. For example, appearance of points can be changed through the usual selector {\tt points}. See the css configurations used earlier in the tutorial for specific examples.
 
-Because \textbf{circlize} transforms data into a polar space, some graphical components are not placed through the usual base graphics functions. A specific example of this are the axes. Whereas in usual plots the axes can be tuned via the base graphics selector {\tt axis}, curved axes are actually created `from scratch' using {\tt lines}. To tune the polar axes, you can pass custom subclasses such as {\tt AXIS} to {\tt circos.Rcssaxis} and create styles of the form 
+Because \textbf{circlize} transforms data into a polar space, some graphical components are not placed through the usual base graphics functions. 
+
+A specific example of this are the axes. Whereas in usual plots the axes can be tuned via the base graphics selector {\tt axis}, curved axes are actually created `from scratch' using {\tt lines}. To tune the polar axes, you can pass custom subclasses such as {\tt AXIS} to {\tt circos.Rcssaxis} and create styles of the form 
 
 <<rcsscirclize_appAXIS, eval=FALSE, highlight=FALSE>>=
 lines.AXIS {
@@ -373,6 +383,15 @@ lines.AXIS {
 @
 
 \noindent See the css configuration in {\tt style4.Rcss} for an example.
+
+Another example of this are the sector stripes in chord diagrams. There are actually drawn using polygons. Thus, to change the color of a particular sector you can define a style such as 
+
+<<rcsscirclize_apppolygon, eval=FALSE, highlight=FALSE>>=
+polygon.SECTORNAME {
+  col: #dd0000;
+}
+@ 
+\noindent See the css configuration in {\tt style6.Rcss} for examples.
 
 
 \end{document}

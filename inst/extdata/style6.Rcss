@@ -74,9 +74,16 @@ circlizetext {
   adj: 0.5;
 }
 
+text {
+  cex: 0.5;
+}
+text.name {
+  cex: 0.75;
+}
+
 /** Settings for chord diagrams **/
 chorddiagram {
-  grid.col: random;
+  grid.col: NULL;
   grid.border: NA;
   transparency: 0.5;
   col: grid;
@@ -86,11 +93,33 @@ chorddiagram {
   reduce: 1e-5;
   self.link: 2;
   annotationTrack: name grid axis; 
-  annotationTrackHeight: 0.05 0.05;
+  annotationTrackHeight: 0.09 0.07;
   link.sort: FALSE;
   link.decreasing: TRUE;
-  namelab.line: 1.2;
+  namelab.line: 0.9; 
 }
 
+
+/** 
+ * Custom changes to base graphics 
+**/
+polygon {
+  col: #cccccc;
+}
+polygon.S3 {
+  col: #00dd00;
+}
+circlizelink {
+  col: #0000007f;
+}
+circlizelink.S3.E4 {
+  col: #0000ff7f;
+}
+circlizelink.S2 {
+  col: #0088ff7f;
+}
+circlizelink.S1.E6 {
+  col: #ff00ff7f;
+}
 
 

@@ -84,6 +84,7 @@ export(draw.Rcsssector)
 export(highlight.Rcsssector)
 export(circos.Rcssdendrogram)
 export(circos.Rcsslink)
+export(RcsschordDiagram)
 
 
 importFrom("GlobalOptions", setGlobalOptions)

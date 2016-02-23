@@ -7,8 +7,6 @@
 ## are included to mirror file link.R. But they bodies are removed
 ## because they do not need re-implementation for Rcssplot)
 ##
-## The implementation of circlize.Rcsslink is particularly inelegant.
-## Suggestions welcome.
 ##
 ## ##################################################################
 
@@ -29,10 +27,6 @@
 #                By default its value is the position of bottom margin of the most inner track.
 # -rou1          The position of root 1 of the link. 
 # -rou2          The position of root 2 of the link.
-# -h             Height of the link. 
-# -w             Since the link is a Bezier curve, it controls the shape of Bezier curve.
-# -h2            Height of the bottom edge of the link if it is a ribbon.
-# -w2            Shape of the bottom edge of the link if it is a ribbon.
 # -directional   0 for no direction, 1 for direction from point1 to point2, -1 for direction from point2 to point1.
 #                2 for two directional
 # -Rcss             Rcss style object
@@ -57,100 +51,25 @@
 # Arguments in "..." processed by Rcssplot: 
 #
 circos.Rcsslink = function(sector.index1, point1, sector.index2, point2,
-  rou = get_most_inside_radius(),
-  rou1 = rou, rou2 = rou, 
-  directional = 0,
+  rou = get_most_inside_radius(), rou1 = rou, rou2 = rou, directional = 0,
   Rcss="default", Rcssclass=c(), ...) {
-  
-  ## start lookup with Rcss
-  args = list(...);
-  if (!hasArg(col)) {
-    col = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "col", Rcssclass=Rcssclass, default="#000000")
-  } else {
-    col = args[["col"]]
-  }
-  if (!hasArg(lwd)) {
-    lwd = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "lwd", Rcssclass=Rcssclass, default=1)
-  } else {
-    lwd = args[["lwd"]]
-  }
-  if (!hasArg(lty)) {
-    lty = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "lty", Rcssclass=Rcssclass, default=1)
-  } else {
-    lty = args[["lty"]]
-  }
-  if (!hasArg(border)) {
-    border = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "border", Rcssclass=Rcssclass, default=NA)
-  } else {
-    border = args[["border"]]
-  }
 
-  args = args[!(names(args) %in% c("col","lwd","lty","border"))]
-  
-  if (!hasArg(arr.type)) {
-    arr.type = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.type", Rcssclass=Rcssclass, default="triangle")
-  } else {
-    arr.type = args[["arr.type"]]
-  }  
-  if (!hasArg(arr.length)) {
-    arr.length = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.length", Rcssclass=Rcssclass,
-      default=ifelse(arr.type=="big.arrow", 0.02, 0.4))
-  } else {
-    arr.length = args[["arr.length"]]
-  }
-  if (!hasArg(arr.width)) {
-    arr.width = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.width", Rcssclass=Rcssclass, default=arr.length/2)
-  } else {
-    arr.width = args[["arr.width"]]
-  }
-  if (!hasArg(arr.lwd)) {
-    arr.lwd = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.lwd", Rcssclass=Rcssclass, default=lwd)
-  } else {
-    arr.lwd = args[["arr.lwd"]]
-  }
-  if (!hasArg(arr.lty)) {
-    arr.lty = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.lty", Rcssclass=Rcssclass, default=lty)
-  } else {
-    arr.lty = args[["arr.lty"]]
-  }
-  if (!hasArg(arr.col)) {
-    arr.col = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "arr.col", Rcssclass=Rcssclass, default=col)
-  } else {
-    arr.col = args[["arr.col"]]
-  }
-  args = args[!(names(args) %in% c("arr.width","arr.length","arr.type", "arr.lwd","arr.lty", "arr.col"))]
-
-  if (!hasArg(h)) {
-    h = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "h", Rcssclass=Rcssclass, default=1)
-  } else {
-    h = args[["h"]]
-  }
-  if (!hasArg(h2)) {
-    h2 = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "h2", Rcssclass=Rcssclass, default=h)
-  } else {
-    h2 = args[["h2"]]
-  }
-  if (!hasArg(w)) {
-    w = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "w", Rcssclass=Rcssclass, default=1)
-  } else {
-    w = args[["w"]]
-  }
-  if (!hasArg(w2)) {
-    w2 = RcssGetPropertyValueOrDefault(Rcss, "circlizelink", "w2", Rcssclass=Rcssclass, default=w)
-  } else {
-    w2 = args[["w2"]]
-  }    
+  ## fill in data from Rcss into the args
+  link.default = list(h = 1, w = 1, h2 = 1, w2 = 1,
+    col = "#000000", lwd = par("lwd"), lty = par("lty"), border = NA,
+    arr.length = 0.4,
+    arr.width = 0.2, arr.type = "triangle", arr.lty = par("lty"), 
+    arr.lwd = par("lwd"), arr.col = "#000000")
+  args = RcssFromArgs(list(...), link.default, Rcss, "circlizelink", Rcssclass)
+  args = args[names(args) %in% names(link.default)]
   ## end lookup with Rcss
 
   ## here just call the old function... (lame implementation)
-  circos.link(sector.index1, point1, sector.index2, point2,
-              rou = rou, rou1=rou1, rou2=rou2, h=h, w=w, h2=h2, w2=2,
-              directional=directional,
-              col=col, lwd=lwd, lty=lty, border=border,
-              arr.width=arr.width, arr.length=arr.length, arr.type=arr.type,
-              arr.lwd=arr.lwd, arr.lty=arr.lty, arr.col=arr.col)
-  
-  
+  do.call(circos.link,
+          c(list(sector.index1=sector.index1, point1=point1,
+                 sector.index2=sector.index2, point2=point2,
+                 rou = rou, rou1=rou1, rou2=rou2, directional=directional), args))
+    
 }
 
 ##arc.points = function(theta1, theta2, rou) { }

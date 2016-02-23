@@ -58,6 +58,7 @@ circos.Rcsstext(mean(xlim), mean(ylim), "updated", Rcss=cc, Rcssclass=c("updated
 circos.RcsstrackPlotRegion(factors = a$factor, y = a$y, Rcss=cc)
 circos.RcsstrackLines(a$factor[1:20], a$x[1:20], a$y[1:20], type = "h", Rcss=cc)
 
+
 ## Inner Links
 circos.Rcsslink("a", 0, "b", 0, h = 0.4, Rcss=cc, Rcssclass=c("linkA"))
 circos.Rcsslink("c", c(-0.5, 0.5), "d", c(-0.5,0.5), Rcss=cc, Rcssclass=c("linkB"))

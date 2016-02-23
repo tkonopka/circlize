@@ -66,9 +66,23 @@
 #
 # Settings from selector "circlize" in Rcss object: cell.padding, gap.degree, start.degree, clock.wise, canvas.xlim, canvas.ylim
 #
-circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = NULL, Rcss="default", Rcssclass=c()) {
+circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = NULL, Rcss="default", Rcssclass=c(), ...) {
   
   resetGlobalVariable()
+
+  ## extract Rcss values
+  circlize.default = list(start.degree=0, clock.wise=TRUE, unit.circle.segments=200)
+  region.default = list(gap.degree=1, cell.padding=c(0.02, 1, 0.02, 1))
+  args = list(...)
+  args = RcssFromArgs(args, circlize.default, Rcss, "circlize", Rcssclass)
+  args = RcssFromArgs(args, region.default, Rcss, "circlizeregion", Rcssclass)
+  cell.padding = args$cell.padding
+  gap.degree =args$gap.degree
+  start.degree = args$start.degree;
+  clock.wise = args$clock.wise;  
+  unit.circle.segments = args$unit.circle.segments;
+
+  ## end of Rcss lookup
   
   .SECTOR.DATA = get(".SECTOR.DATA", envir = .CIRCOS.ENV)
   .CELL.DATA = get(".CELL.DATA", envir = .CIRCOS.ENV)
@@ -112,8 +126,6 @@ circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = 
     stop("You should specify either `x` or `xlim`.\n")
   }
   
-  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlize", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
-  
   ## range for sectors
   sector.range = max.value - min.value
   n.sector = length(le)
@@ -128,21 +140,13 @@ circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = 
   sector[["min.data"]] = min.value
   sector[["max.data"]] = max.value
   
-  gap.degree = RcssGetPropertyValueOrDefault(Rcss, "circlize", "gap.degree", Rcssclass=Rcssclass, default=1)
-  
   if(length(gap.degree) == 1) {
     gap.degree = rep(gap.degree, n.sector)
   } else if(length(gap.degree) != n.sector) {
     stop("Since `gap.degree` parameter has length larger than 1, it should have same length as number of levels of factors.\n")
   }
   
-  start.degree = RcssGetPropertyValueOrDefault(Rcss, "circlize", "start.degree", Rcssclass=Rcssclass, default=0)
-  clock.wise = RcssGetPropertyValueOrDefault(Rcss, "circlize", "clock.wise", Rcssclass=Rcssclass, default=TRUE)
-
-  unit.circle.segments = RcssGetPropertyValueOrDefault(Rcss, "circlize",
-    "unit.circle.segments", Rcssclass=Rcssclass, default=200)
   circos.par("unit.circle.segments"=unit.circle.segments)
-
   
   if(360 - sum(gap.degree) <= 0) {
     stop("Maybe your `gap.degree` is too large so that there is no space to allocate sectors.\n")
@@ -207,7 +211,7 @@ circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = 
   }
     
   if(any(cell.padding[2] + cell.padding[4] >= sector[["start.degree"]] - sector[["end.degree"]])) {
-    stop("Summation of cell padding on x-direction are larger than the width for some sectors.\nYou can set 'circos.par(cell.padding = c(0.02, 0, 0.02, 0))' or remove tiny sectors.\n")
+    stop("Summation of cell padding on x-direction are larger than the width for some sectors.\nYou can set 'cell.padding: 0.02 0 0.02 0;' in the circlizeregions selector or remove tiny sectors.\n")
   }
   
   min.value = min.value - cell.padding[2]/(sector[["start.degree"]] - sector[["end.degree"]] - cell.padding[2] - cell.padding[4])*sector.range  # real min value

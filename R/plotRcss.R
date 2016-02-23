@@ -82,14 +82,16 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
 
   ## get some info on tracks
   args = list(...)
-  track.args = c("track.height", "track.margin", "cell.padding")
-  track.height = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.height", Rcssclass=Rcssclass, default=0.2)
-  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
-  o.track.margin = track.margin;
-  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
-  o.cell.padding = cell.padding;
-  args = args[!(names(args) %in% track.args)]
-
+  track.default = list(track.height=0.1, track.margin=c(0.01, 0.01), cell.padding=c(0.02, 1, 0.02, 1))
+  trackargs = RcssFromArgs(list(...), track.default, Rcss, "circlizeregion", Rcssclass)
+  ## below, the arguments are referred to in several places by simple name, for simplicity create new objects here
+  track.height = trackargs$track.height
+  track.margin = trackargs$track.margin
+  cell.padding = trackargs$cell.padding
+  ## make object with non-circlizeregion args
+  args = args[!(names(args) %in% names(track.default))]
+  ## end of Rcss lookup
+    
   ## if there is no factors, default are all the available factors
   if(is.null(factors)) {
     factors = get.all.sector.index()
@@ -102,7 +104,7 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
      !is.null(x) && length(x) != length(factors)) {
     stop("Length of data and length of factors differ.\n")
   }
-  
+
   ## need to be a factor
   if(!is.factor(factors)) {
     factors = factor(factors)
@@ -145,7 +147,7 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
     }
     set.current.track.index(track.index)
   }
-    
+
   le = levels(factors)
   nlevel = length(le)
 
@@ -172,11 +174,11 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
 
   if(flag_createNewTrack) {
     if(track.index == 1) {
-      track.start = 1 - o.track.margin[2];
+      track.start = 1 - track.margin[2];
     } else {
       track.start = get.cell.meta.data("cell.bottom.radius", track.index = track.index - 1) - 
         get.cell.meta.data("track.margin", track.index = track.index - 1)[1] -
-          o.track.margin[2]      
+          track.margin[2]      
     }
   } else {
     track.start = get.cell.meta.data("cell.top.radius", track.index = track.index)
@@ -207,13 +209,14 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
     } else {
       ylim2 = ylim[i, ]
     }
-    
+
     ## create plotting region for single cell
+    ## cat("calling create with args: ", length(args), " ", names(args), "\n")
     do.call(circos.RcsscreatePlotRegion,
             c(list(track.start = track.start, track.height = track.height, sector.index = le[i],
                    track.index = track.index, ylim = ylim2, 
                    Rcss=Rcss2, Rcssclass=c(Rcssclass, le[i])), args))
-    
+
     l = factors == le[i]
     if(!is.null(panel.fun)) {
       if(is.null(x)) {
@@ -227,6 +230,7 @@ circos.RcsstrackPlotRegion = function(factors = NULL, x = NULL, y = NULL, ylim =
       } else {
         ny = y[l]
       }
+
       panel.fun(nx, ny)
     }
     
@@ -295,29 +299,9 @@ circos.RcssupdatePlotRegion = function(sector.index = get.cell.meta.data("sector
     stop("You can only update an existed cell.\n")
   }
 
-   ## start lookup with Rcss
-  args = list(...);
-  if (!hasArg(bg.col)) {
-    bg.col = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.col", Rcssclass=c(Rcssclass, sector.index), default="#ffffff")
-  } else {
-    bg.col = args[["bg.col"]]
-  }
-  if (!hasArg(bg.border)) {
-    bg.border = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.border", Rcssclass=c(Rcssclass, sector.index), default=NA)
-  } else {
-    bg.border = args[["bg.border"]]
-  }  
-  if (!hasArg(bg.lty)) {
-    bg.lty = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lty", Rcssclass=c(Rcssclass, sector.index), default=1)
-  } else {
-    bg.lty = args[["bg.lty"]]
-  }    
-  if (!hasArg(bg.lwd)) {
-    bg.lwd = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lwd", Rcssclass=c(Rcssclass, sector.index), default=1)
-  } else {
-    bg.lwd = args[["bg.lwd"]]
-  }
-  args = args[!(names(args) %in% c("bg.col","bg.border","bg.lty", "bg.lwd"))]
+  ## start lookup with Rcss
+  update.defaults = list(bg.col="#ffffff", bg.border=NA, bg.lty=1, bg.lwd=1)
+  args = RcssFromArgs(list(...), update.defaults, Rcss, "circlizeregion", c(Rcssclass, sector.index))
   ## end lookup with Rcss
   
   cell.xlim = get.cell.meta.data("cell.xlim", sector.index = sector.index, track.index = track.index)
@@ -329,9 +313,9 @@ circos.RcssupdatePlotRegion = function(sector.index = get.cell.meta.data("sector
   ## cover the exsited region by fill with white
   lwd = get.cell.meta.data("bg.lwd", sector.index = sector.index, track.index = track.index)
   circos.Rcssrect(cell.xlim[1], cell.ylim[1], cell.xlim[2], cell.ylim[2], 
-                  col = "white", border = "white", lty = 1, lwd = lwd, Rcss=Rcss, Rcssclass=Rcssclass)
+                  col = "white", border = "white", lty = 1, lwd = args$lwd, Rcss=Rcss, Rcssclass=Rcssclass)
   circos.Rcssrect(cell.xlim[1], cell.ylim[1], cell.xlim[2], cell.ylim[2], 
-                  col = bg.col, border = bg.border, lty = bg.lty, lwd = bg.lwd, Rcss=Rcss, Rcssclass=Rcssclass)
+                  col = args$bg.col, border = args$bg.border, lty = args$bg.lty, lwd = args$bg.lwd, Rcss=Rcss, Rcssclass=Rcssclass)
   return(invisible(NULL))
 }
 
@@ -364,38 +348,13 @@ circos.RcsscreatePlotRegion = function(track.start, track.height = circos.par("t
   cell.xlim = c(sector.data["min.value"], sector.data["max.value"])
   names(cell.xlim) = NULL
   
-  cell.padding = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "cell.padding", Rcssclass=Rcssclass, default=c(0.02, 1, 0.02, 1))
-  track.margin = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "track.margin", Rcssclass=Rcssclass, default=c(0.01, 0.01))
-  
   ## get graphics parameters from Rcss
-  args = list(...);
-  
-  if (!hasArg(bg.col)) {
-    bg.col = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.col",
-      default=NA, Rcssclass=Rcssclass)
-  } else {
-    bg.col = args[["bg.col"]]
-  }
-  if (!hasArg(bg.border)) {
-    bg.border = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.border",
-      default="#000000", Rcssclass=Rcssclass)
-  } else {
-    bg.border = args[["bg.border"]]
-  }
-  if (!hasArg(bg.lty)) {
-    bg.lty = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lty",
-      default=1, Rcssclass=Rcssclass)
-  } else {
-    bg.lty = args[["bg.lty"]]
-  }
-  if (!hasArg(bg.lwd)) {
-    bg.lwd = RcssGetPropertyValueOrDefault(Rcss, "circlizeregion", "bg.lwd",
-      default=1, Rcssclass=Rcssclass)
-  } else {
-    bg.lwd = args[["bg.lwd"]]
-  }
+  create.default = list(bg.col=NA, bg.border="#000000", bg.lty=1, bg.lwd=1,
+    cell.padding=c(0.02, 1, 0.02, 1), track.margin=c(0.01, 0.01))
+  args = RcssFromArgs(list(...), create.default, Rcss, "circlizeregion", Rcssclass)
+  cell.padding = args$cell.padding
   ## end of Rcss fetch
-        
+  
   xlim = c(sector.data["min.data"], sector.data["max.data"])
   
   if(cell.padding[1] + cell.padding[3] >= track.height) {
@@ -414,19 +373,19 @@ circos.RcsscreatePlotRegion = function(track.start, track.height = circos.par("t
                 cell.ylim = yl,
                 track.start = track.start,
                 track.height = track.height,
-		track.margin = track.margin,
-		cell.padding = cell.padding,
-                bg.col = bg.col,
-                bg.border = bg.border,
-                bg.lty = bg.lty,
-                bg.lwd = bg.lwd)
+		track.margin = args$track.margin,
+		cell.padding = args$cell.padding,
+                bg.col = args$bg.col,
+                bg.border = args$bg.border,
+                bg.lty = args$bg.lty,
+                bg.lwd = args$bg.lwd)
   
   set.current.sector.index(sector.index)
   
   ## The plotting region is a rectangle
   cell.ylim = yl
   circos.Rcssrect(cell.xlim[1], cell.ylim[1], cell.xlim[2], cell.ylim[2], sector.index = sector.index, track.index = track.index,
-                  col = bg.col, border = bg.border, lty = bg.lty, lwd = bg.lwd, Rcss=Rcss, Rcssclass=Rcssclass)
+                  col = args$bg.col, border = args$bg.border, lty = args$bg.lty, lwd = args$bg.lwd, Rcss=Rcss, Rcssclass=Rcssclass)
   return(invisible(NULL))
 }
 
@@ -581,20 +540,13 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
   Rcss="default", Rcssclass=c(), ...) {
   
   ## replace function arguments by Rcss lookup
-  args = list(...)
-  if (!hasArg(type)) {
-    type = RcssGetPropertyValueOrDefault(Rcss, "circlizelines", "type", default="l", Rcssclass=Rcssclass)
-  } else {
-    type = args[["type"]]
-  }
-  if (!hasArg(baseline)) {
-    baseline = RcssGetPropertyValueOrDefault(Rcss, "circlizelines", "baseline", default="bottom", Rcssclass=Rcssclass)
-  }  else {
-    baseline = args[["baseline"]]
-  }
-  args = args[!(names(args) %in% c("type","baseline"))]
+  clines.default = list(type="l", baseline="bottom")
+  args = RcssFromArgs(list(...), clines.default, Rcss, "circlizelines", Rcssclass)
+  type = args$type
+  baseline = args$baseline
+  args = args[!(names(args) %in% names(clines.default))]
   ## end of Rcss lookup
-
+  
   if(length(x) != length(y)) {
     stop("Length of x and y differ.\n")
   }
@@ -604,7 +556,7 @@ circos.Rcsslines = function(x, y, sector.index = get.cell.meta.data("sector.inde
   } else if(baseline == "top") {
     baseline = get.cell.meta.data("ylim", sector.index, track.index)[2]
   }
-  
+
   if(type == "l") {
     
   } else if(type == "o") {
@@ -779,7 +731,7 @@ circos.RcsstrackLines = function(factors, x, y, track.index = get.cell.meta.data
 circos.Rcssrect = function(xleft, ybottom, xright, ytop,
   sector.index = get.cell.meta.data("sector.index"), 
   track.index = get.cell.meta.data("track.index"), Rcss="default", Rcssclass=c(), ...) {
-  
+
   if(!has.cell(sector.index, track.index)) {
     stop("'circos.Rcssrect' can only be used after the plotting region been created\n")
   }
@@ -868,12 +820,6 @@ circos.Rcsssegments = function(x0, y0, x1, y1, sector.index = get.cell.meta.data
     stop("x0, y0, x1, y1 should have same length.")
   }  
   
-  if (!hasArg(type)) {
-    type = "l"
-  } else {
-    type = list(...)[["type"]]
-  }
-  
   if(length(straight) == 1) straight = rep(straight, length(x0))
   x = NULL
   y = NULL
@@ -891,7 +837,7 @@ circos.Rcsssegments = function(x0, y0, x1, y1, sector.index = get.cell.meta.data
   y = y[-length(y)]
   d2 = circlize(x, y, sector.index, track.index)
   d3 = polar2Cartesian(d2)
-  Rcsslines(d3[,1], d3[,2], type=type, Rcss=Rcss, Rcssclass=Rcssclass, ...)
+  Rcsslines(d3[,1], d3[,2], Rcss=Rcss, Rcssclass=Rcssclass, ...)
 }
 
 
@@ -920,23 +866,14 @@ circos.Rcsstext = function(x, y, labels, sector.index = get.cell.meta.data("sect
   Rcss="default", Rcssclass=c(), ...) {  
   
   ## replace arguments by lookup in Rcss object
-  args = list(...)  
-  if (!hasArg(facing)) {
-    facing = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "facing", default="inside", Rcssclass=Rcssclass)
-  } else {
-    facing = args[["facing"]]
-  }
-  if (!hasArg(niceFacing)) {
-    niceFacing = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "niceFacing", default=FALSE, Rcssclass=Rcssclass)
-  } else {
-    niceFacing = args[["niceFacing"]]
-  }
-  if (!hasArg(adj)) {
-    adj = RcssGetPropertyValueOrDefault(Rcss, "circlizetext", "adj", default=0.5, Rcssclass=Rcssclass)
-  } else {
-    adj = args[["adj"]]
-  }
-  args = args[!(names(args) %in% c("facing", "niceFacing", "adj"))]
+  args = list(...)
+  text.default = list(facing="inside", niceFacing=FALSE, adj=0.5)
+  textargs = RcssFromArgs(args, text.default, Rcss, "circlizetext", Rcssclass)
+  facing = textargs$facing
+  niceFacing = textargs$niceFacing
+  adj = textargs$adj
+  ## leftover arguments
+  args = args[!(names(args) %in% names(text.default))]
   ## end of Rcss lookup
   
   if(length(x) != length(y)) {
@@ -1156,8 +1093,6 @@ circos.RcsstrackText = function(factors, x, y, labels, track.index = get.cell.me
 #                   of the major ticks. It can exceed ``xlim`` value and the exceeding part
 #                   would be trimmed automatically. If it is ``NULL``, about every 10 degrees there is a major tick.
 # -labels           labels of the major ticks. Also, the exceeding part would be trimmed automatically.
-# -major.tick       Whether to draw major tick. If it is set to ``FALSE``, there would be
-#                   no minor ticks.
 # -sector.index     Index for the sector
 # -track.index      Index for the track
 # -Rcss             Rcss style object
@@ -1169,7 +1104,7 @@ circos.RcsstrackText = function(factors, x, y, labels, track.index = get.cell.me
 # It can only draw axes on x-direction.
 #
 # Arguments in "..." processed by circlize: labels.facing, labels.niceFacing, minor.ticks,
-#                                           major.tick.percentage, major.tick, minor.ticks,
+#                                           major.tick.percentage, major.tick, 
 #                                           direction, labels.away.percentage
 # Arguments in "..." processed by Rcssplot: labels.font, labels.cex, lwd
 #
@@ -1180,46 +1115,19 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
 
   ## replace function arguments by lookup in Rcssplot object
   args = list(...)
-  if (!hasArg(labels.facing)) {
-    labels.facing = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "labels.facing", default="inside", Rcssclass=Rcssclass)
-  } else {
-    labels.facing = args[["labels.facing"]]
-  }
-  if (!hasArg(minor.ticks)) {
-    minor.ticks = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "minor.ticks", default=4, Rcssclass=Rcssclass)
-  } else {
-    minor.ticks = args[["minor.ticks"]]
-  }
-  if (!hasArg(labels.niceFacing)) {
-    labels.niceFacing = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "labels.niceFacing", default=TRUE, Rcssclass=Rcssclass)
-  } else {
-    labels.niceFacing = args[["labels.niceFacing"]]
-  }
-  if (!hasArg(major.tick.percentage)) {
-    major.tick.percentage = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "major.tick.percentage", default=0.1, Rcssclass=Rcssclass);
-  } else {
-    major.tick.percentage = args[["major.tick.percentage"]]
-  }
-  if (!hasArg(labels.away.percentage)) {
-    labels.away.percentage = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis",
-      "labels.away.percentage", default=major.tick.percentage/2, Rcssclass=Rcssclass);
-  } else {
-    labels.away.percentage = args[["labels.away.percentage"]]
-  }
-  if (!hasArg(major.tick)) {
-    major.tick =  RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "major.tick", default=1, Rcssclass=Rcssclass);
-  } else {
-    major.tick = args[["major.tick"]]
-  }
-  if (!hasArg(direction)) {
-    direction = RcssGetPropertyValueOrDefault(Rcss, "circlizeaxis", "direction", default="outside", Rcssclass=Rcssclass)
-  } else {
-    direction = args[["direction"]]
-  }
-  args = args[!(names(args) %in% c("labels.facing", "minor.ticks", "labels.niceFacing",
-    "major.tick.percentage", "labels.away.percentage", "major.tick", "direction"))]
+  axis.default = list(labels.facing="inside", minor.ticks=4, labels.niceFacing=TRUE, major.tick.percentage=0.1,
+    labels.away.percentage=0.05, major.tick=1, direction="outside")
+  axisargs = RcssFromArgs(args, axis.default, Rcss, "circlizeaxis", Rcssclass)
+  labels.facing = axisargs$labels.facing
+  minor.ticks = axisargs$minor.ticks
+  labels.niceFacing = axisargs$labels.niceFacing
+  major.tick.percentage = axisargs$major.tick.percentage
+  labels.away.percentage = axisargs$labels.away.percentage
+  major.tick= axisargs$major.tick
+  direction = axisargs$direction
+  ## leftover arguments
+  args = args[!(names(args) %in% names(axis.default))]
   ## end of Rcss lookup
-
   
   if(! direction %in% c("outside", "inside")) {
     stop("Direction should be in 'outside' and 'inside'.\n")
@@ -1251,11 +1159,18 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   }
 
   xlim2 = xlim
-  circos.Rcsslines(c(ifelse(major.at[1] >= xlim2[1], major.at[1], xlim2[1]),
-                     ifelse(major.at[length(major.at)] <= xlim2[2], major.at[length(major.at)], xlim2[2])), 
-                   c(h, h), sector.index = sector.index, track.index = track.index,
-                   straight=FALSE, area=FALSE,
-                   Rcss=Rcss, Rcssclass=Rcssclass, args)
+  do.call(circos.Rcsslines,
+          c(list(x=c(ifelse(major.at[1] >= xlim2[1], major.at[1], xlim2[1]),
+                   ifelse(major.at[length(major.at)] <= xlim2[2], major.at[length(major.at)], xlim2[2])),
+                 y=c(h, h),
+                 sector.index = sector.index, track.index = track.index, straight=FALSE, area=FALSE,
+                 Rcss=Rcss, Rcssclass=Rcssclass), args))
+  
+  ##circos.Rcsslines(c(ifelse(major.at[1] >= xlim2[1], major.at[1], xlim2[1]),
+  ##                   ifelse(major.at[length(major.at)] <= xlim2[2], major.at[length(major.at)], xlim2[2])), 
+  ##                 c(h, h), sector.index = sector.index, track.index = track.index,
+  ##                 straight=FALSE, area=FALSE,
+  ##                 Rcss=Rcss, Rcssclass=Rcssclass, args)
   
   ## ticks
   yrange = get.cell.meta.data("yrange", sector.index, track.index)
@@ -1265,8 +1180,11 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   circos.par("points.overflow.warning" = FALSE)
   l = major.at >= xlim2[1] & major.at <= xlim2[2]
   if(major.tick) {
-    circos.Rcsssegments(major.at[l], rep(h, sum(l)), major.at[l], rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1), straight = TRUE,
-                        sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
+    do.call(circos.Rcsssegments,
+            c(list(x0=major.at[l], y0=rep(h, sum(l)), x1=major.at[l], y1=rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1),
+                   straight = TRUE, sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass), args))
+    ##circos.Rcsssegments(major.at[l], rep(h, sum(l)), major.at[l], rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1), straight = TRUE,
+    ##                    sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
   }
   
   labels.adj = NULL
@@ -1318,8 +1236,11 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   if(major.tick) {
     
     l = minor.at >= xlim2[1] & minor.at <= xlim2[2]
-    circos.Rcsssegments(minor.at[l], rep(h, sum(l)), minor.at[l], rep(h, sum(l)) + major.tick.length/2*ifelse(direction == "outside", 1, -1), straight = TRUE,
-                        sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
+    do.call(circos.Rcsssegments,
+            c(list(x0=minor.at[l], y0=rep(h, sum(l)), x1=minor.at[l], y1=rep(h, sum(l)) + major.tick.length/2*ifelse(direction == "outside", 1, -1),
+                   straight = TRUE, sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass), args))
+    ##circos.Rcsssegments(minor.at[l], rep(h, sum(l)), minor.at[l], rep(h, sum(l)) + major.tick.length/2*ifelse(direction == "outside", 1, -1), straight = TRUE,
+    ##                    sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
   }
   
   circos.par("points.overflow.warning" = op)

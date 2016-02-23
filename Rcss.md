@@ -29,6 +29,7 @@ Some high-level functions:
 
 - `circos.RcsstrackHist()`
 - `circos.Rcssdendrogram()`
+- `RcsschordDiagram()`
 
 
 
