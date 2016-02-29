@@ -1,0 +1,26 @@
+/**
+ * Custom style 3. Add-on definitions to "circlize.base.Rcss"
+ */ 
+
+circlizeregion.e, circlizeregion.g {
+  bg.col: #ffeeaa;  bg.lwd: 2.5;
+}
+circlizelink.linkB {
+  col: #0000cc;  h: 0.4;  h2: 0.37;
+}
+circlizelink.linkC {
+  col: #dd0000;  w: 2;  w2: 2.2;
+}
+lines.axis {
+  lwd: 3;  col: #000000;  
+}
+points.first, points.second {
+  pch: 1; cex: 1; lwd: 1.3;
+}
+points.first {
+  col: #bb0000;
+}
+points.second {
+  col: #0000bb;  pch: 2;
+}
+

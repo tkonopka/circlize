@@ -11,15 +11,11 @@ circlize {
   start.degree: 0;
   gap.degree: 1;
   unit.circle.segments: 300;
-  default.track.heigh: 0.2;
   points.overflow.warning: 1;
   canvas.xlim: -1 1;
   canvas.ylim: -1 1;
-  major.by.degree: 10;
   clock.wise: 1;
-  lend: NULL;
-  ljoin: NULL;
-  bg.border: #000000;
+  bg.col: NA;
 }
 circlize.draft {
   unit.circle.segments: 100;
@@ -30,10 +26,10 @@ circlizeaxis {
   direction: outside;
   labels.facing: inside;
   labels.niceFacing: 1;
+  major.by.degree: 10;
   minor.ticks: 4;
   major.tick.percentage: 0.1;
   labels.away.percentage: 0.05;
-  tick.length: 0.5;
 }
 
 /** Settings tuning lines/curves within sectors **/
@@ -82,6 +78,10 @@ circlizetext {
 /** 
  * Custom changes to circlize-specific selectors 
 **/
+circlize.flip {
+  start.degree: 180;
+  clock.wise: 0;
+}
 circlizeregion.e, circlizeregion.g {
   bg.col: #ffeeaa;
   bg.lwd: 1.3;

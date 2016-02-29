@@ -76,8 +76,8 @@ RcsschordDiagram = function(x, Rcss="default", Rcssclass=c(), ...) {
 # == value
 # Sum of gaps for ``mat2``.
 #
-# This function considers the "circlize" and extracts gap.degree and start.degree
-#
+# This function considers the "circlize" selector and extracts gap.degree and start.degree
+# (Is this used anywhere?)
 RcssnormalizeChordDiagramGap = function(mat1, mat2, Rcss="default", Rcssclass=c(), ...) {
   
   percent = sum(abs(mat2)) / sum(abs(mat1))
@@ -130,9 +130,9 @@ RcssnormalizeChordDiagramGap = function(mat1, mat2, Rcss="default", Rcssclass=c(
 #                    tracks. Please refer to vignette for details.
 #
 RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssclass=c(), ...) {
-
+  
   ## copy of settings from old function definition into an internal list here
-  chord.default = list(grid.col = NULL, grid.border=NULL, transparency = 0.5, col = NULL,
+  chord.default = list(grid.col = "random", grid.border=NULL, transparency = 0.5, col = "grid",
     directional = 0, direction.type = "diffHeight", diffHeight = 0.04, reduce = 1e-5, self.link = 2,
     annotationTrack = c("name", "grid", "axis"), annotationTrackHeight = c(0.05, 0.05), 
     link.sort = FALSE, link.decreasing = TRUE)
@@ -204,6 +204,7 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
   
   grid.col = nowargs$grid.col
   grid.border = nowargs$grid.border;
+
   if (identical(grid.col, "NA") | identical(grid.col, "NULL") | identical(grid.col, NA)) grid.col=NULL
   if (identical(grid.border, "NA") | identical(grid.border, "NULL") | identical(grid.border, NA)) grid.border=NULL
   
@@ -274,23 +275,31 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
       col = col(df[[3]])
     } else {
       col = rep(col, nr)[1:nr]
-    }    
-    rgb_mat = t(col2rgb(col, alpha = TRUE))
-    if(is.na(transparency)) {
-      col = rgb(rgb_mat, maxColorValue = 255, alpha = rgb_mat[, 4])
-    } else if(all(rgb_mat[, 4] == 255)) {
-      col = rgb(rgb_mat, maxColorValue = 255, alpha = (1-transparency)*255)
-    } else {
-      col = rgb(rgb_mat, maxColorValue = 255, alpha = rgb_mat[, 4])
     }
+    ## at this stage, col is a vector with one item per df row
+    ## but some cols may be "". Interpret these as "leave for css"
+    col.change = (col!="")
+    col.change[is.na(col.change)] = TRUE;
+    col.na = is.na(col)    
+    if (sum(col.change)>0) {
+      rgb_mat = t(col2rgb(col[col.change], alpha = TRUE))
+      if(is.na(transparency)) {
+        col[col.change] = rgb(rgb_mat, maxColorValue = 255, alpha = rgb_mat[, 4])
+      } else if(all(rgb_mat[, 4] == 255)) {
+        col[col.change] = rgb(rgb_mat, maxColorValue = 255, alpha = (1-transparency)*255)
+      } else {
+        col[col.change] = rgb(rgb_mat, maxColorValue = 255, alpha = rgb_mat[, 4])
+      }
+    }
+    col[col.na] = NA
   }
   ## update colors for all links in the chords Rcss
   if (!is.null(col)) {
-    for(k in seq_len(nrow(df))) {
+    for(k in seq_len(nrow(df))[col.change]) {
       nowfrom = df[k, 1]
       nowto = df[k, 2]
       Rcss.chords = RcssChangePropertyValue(Rcss.chords, selector="circlizelink", Rcssclass=c("chords", Rcssclass, nowfrom, nowto),
-        property="col", value=col[k])     
+        property="col", value=col[k])
     }
   }
   
@@ -312,16 +321,14 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
       xsum[df$cn[i]] = xsum[df$cn[i]] + abs(df$value[i])
     }
   }
-
+  
   reduce = nowargs$reduce;
   keep = names(xsum)[xsum / sum(xsum) >= reduce]
-  l = df$rn %in% keep | df$cn %in% keep
-
+  l = df$rn %in% keep & df$cn %in% keep
+  
   ## get rid of some rows in the data frame (and accompanying settings)
   cate = intersect(cate, keep)
   df = df[l, , drop = FALSE]
-  ##grid.col = grid.col[intersect(names(grid.col), keep)]
-  ##col = col[l]
   linkargs = lapply(linkargs, function(x) {x[l]})
   directional = directional[l]
   direction.type = direction.type[l]
@@ -413,10 +420,9 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
   
   ## #####################################
   ## End of prep - now create regions and draw components onto the chart
-  
-  
+    
   Rcss2 = RcssChangePropertyValue(Rcss, "circlizeregion", property="cell.padding", value=c(0, 0, 0, 0), Rcssclass=Rcssclass)
-  circos.Rcssinitialize(factors = factor(cate, levels = cate), xlim = cbind(rep(0, length(xsum)), xsum), Rcss=Rcss2, Rcssclass=Rcssclass)
+  circos.Rcssinitialize(factors = factor(cate, levels = cate), xlim = cbind(rep(0, length(cate)), xsum[cate]), Rcss=Rcss2, Rcssclass=Rcssclass)
   
   annotationTrack = nowargs$annotationTrack
   annotationTrackHeight = nowargs$annotationTrackHeight
@@ -443,7 +449,7 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
                                  circos.Rcssrect(xlim[1], 0, xlim[2], 1,
                                                  Rcss=Rcss.grid, Rcssclass=c(Rcssclass, current.sector.index))
                                  if("axis" %in% annotationTrack) {
-                                   circos.Rcssaxis("top", Rcss=Rcss, Rcssclass=Rcssclass) 
+                                   circos.Rcssaxis("top", Rcss=Rcss, Rcssclass=c("axis",Rcssclass)) 
                                  }
                                },
                                track.height = annotationTrackHeight[which(annotationTrack %in% "grid")],
@@ -490,7 +496,7 @@ RcsschordDiagramFromDataFrame = function(df, order = NULL, Rcss="default", Rcssc
       rou2[i] = rou
     }
   }
-  
+
   for(k in seq_len(nrow(df))) {
     nowfrom = df[k, 1]
     nowto = df[k, 2]

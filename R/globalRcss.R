@@ -69,9 +69,10 @@
 circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = NULL, Rcss="default", Rcssclass=c(), ...) {
   
   resetGlobalVariable()
-
+  
   ## extract Rcss values
-  circlize.default = list(start.degree=0, clock.wise=TRUE, unit.circle.segments=200)
+  circlize.default = list(start.degree=0, clock.wise=TRUE, unit.circle.segments=200,
+    canvas.xlim=c(-1,1), canvas.ylim=c(-1,1), bg.col=NA)
   region.default = list(gap.degree=1, cell.padding=c(0.02, 1, 0.02, 1))
   args = list(...)
   args = RcssFromArgs(args, circlize.default, Rcss, "circlize", Rcssclass)
@@ -235,9 +236,13 @@ circos.Rcssinitialize = function(factors, x = NULL, xlim = NULL, sector.width = 
   assign(".CELL.DATA", .CELL.DATA, envir = .CIRCOS.ENV)
   
   ## draw everything in a unit circle
-  canvas.xlim = RcssGetPropertyValueOrDefault(Rcss, "circlize", "canvas.xlim", Rcssclass=Rcssclass, default=c(-1, 1))
-  canvas.ylim = RcssGetPropertyValueOrDefault(Rcss, "circlize", "canvas.ylim", Rcssclass=Rcssclass, default=c(-1, 1))
-  Rcssplot(canvas.xlim, canvas.ylim, type = "n", ann = FALSE, axes = FALSE, Rcss=Rcss, Rcssclass=Rcssclass)
+  Rcssplot(args$canvas.xlim, args$canvas.ylim, type = "n", ann = FALSE, axes = FALSE, Rcss=Rcss, Rcssclass=Rcssclass)
+  if (!identical(args$bg.col, NULL)) {
+    parusr = par("usr")
+    Rcssrect(parusr[1], parusr[3], parusr[2], parusr[4],
+             col=args$bg.col, border=NA, lwd=0, 
+             Rcss=Rcss, Rcssclass=c(Rcssclass, "canvas"))
+  }
   
   ## all the information of cells would be visited through `get.cell.meta.data`
   return(invisible(NULL))

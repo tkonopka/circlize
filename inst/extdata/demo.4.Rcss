@@ -1,0 +1,27 @@
+/**
+ * Custom style 4. Add-on definitions to "circlize.base.Rcss"
+ */ 
+
+circlizeaxis {
+  minor.ticks: 0;  major.tick.percentage: 0.3;
+}
+circlizeregion {
+  track.height: 0.12;
+  bg.col: #eeeeee;
+}
+circlize.flip {
+  start.degree: 180;  clock.wise: 0;  
+}
+circlizeregion.a, circlizeregion.b {
+  bg.col: #ffcccc;
+}
+circlizelink.linkA, circlizelink.linkB, circlizelink.linkC {
+  col: #eeeeee;
+}
+circlizelink.linkA {
+  lwd: 6;  col: #ffdddd;
+}
+points {
+  col: #444466;
+}
+

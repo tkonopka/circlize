@@ -1104,7 +1104,7 @@ circos.RcsstrackText = function(factors, x, y, labels, track.index = get.cell.me
 # It can only draw axes on x-direction.
 #
 # Arguments in "..." processed by circlize: labels.facing, labels.niceFacing, minor.ticks,
-#                                           major.tick.percentage, major.tick, 
+#                                           major.tick.percentage, major.tick, major.by.degree,
 #                                           direction, labels.away.percentage
 # Arguments in "..." processed by Rcssplot: labels.font, labels.cex, lwd
 #
@@ -1116,6 +1116,7 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   ## replace function arguments by lookup in Rcssplot object
   args = list(...)
   axis.default = list(labels.facing="inside", minor.ticks=4, labels.niceFacing=TRUE, major.tick.percentage=0.1,
+    major.by.degree=10,
     labels.away.percentage=0.05, major.tick=1, direction="outside")
   axisargs = RcssFromArgs(args, axis.default, Rcss, "circlizeaxis", Rcssclass)
   labels.facing = axisargs$labels.facing
@@ -1142,7 +1143,10 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   } else if(h == "bottom") {
     h = get.cell.meta.data("cell.ylim", sector.index, track.index)[1]
   }
-  
+
+  ## transfor the axis major tick settings into circos.par
+  ## (default.major.by uses this information from circos.par)
+  circos.par(major.by.degree=axisargs$major.by.degree)
   if(is.null(major.at)) {
     major.by = .default.major.by(sector.index, track.index)
     major.at = seq(floor(xlim[1]/major.by)*major.by, xlim[2], by = major.by)
@@ -1166,12 +1170,6 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
                  sector.index = sector.index, track.index = track.index, straight=FALSE, area=FALSE,
                  Rcss=Rcss, Rcssclass=Rcssclass), args))
   
-  ##circos.Rcsslines(c(ifelse(major.at[1] >= xlim2[1], major.at[1], xlim2[1]),
-  ##                   ifelse(major.at[length(major.at)] <= xlim2[2], major.at[length(major.at)], xlim2[2])), 
-  ##                 c(h, h), sector.index = sector.index, track.index = track.index,
-  ##                 straight=FALSE, area=FALSE,
-  ##                 Rcss=Rcss, Rcssclass=Rcssclass, args)
-  
   ## ticks
   yrange = get.cell.meta.data("yrange", sector.index, track.index)
   major.tick.length = yrange * major.tick.percentage
@@ -1183,8 +1181,6 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
     do.call(circos.Rcsssegments,
             c(list(x0=major.at[l], y0=rep(h, sum(l)), x1=major.at[l], y1=rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1),
                    straight = TRUE, sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass), args))
-    ##circos.Rcsssegments(major.at[l], rep(h, sum(l)), major.at[l], rep(h, sum(l)) + major.tick.length*ifelse(direction == "outside", 1, -1), straight = TRUE,
-    ##                    sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
   }
   
   labels.adj = NULL
@@ -1233,14 +1229,11 @@ circos.Rcssaxis = function(h = "top", major.at = NULL, labels = TRUE,
   }				
   
 
-  if(major.tick) {
-    
+  if(major.tick) {    
     l = minor.at >= xlim2[1] & minor.at <= xlim2[2]
     do.call(circos.Rcsssegments,
             c(list(x0=minor.at[l], y0=rep(h, sum(l)), x1=minor.at[l], y1=rep(h, sum(l)) + major.tick.length/2*ifelse(direction == "outside", 1, -1),
                    straight = TRUE, sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass), args))
-    ##circos.Rcsssegments(minor.at[l], rep(h, sum(l)), minor.at[l], rep(h, sum(l)) + major.tick.length/2*ifelse(direction == "outside", 1, -1), straight = TRUE,
-    ##                    sector.index = sector.index, track.index = track.index, type="l", Rcss=Rcss, Rcssclass=Rcssclass, args)
   }
   
   circos.par("points.overflow.warning" = op)

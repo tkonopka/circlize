@@ -1,0 +1,21 @@
+/**
+ * Custom style 2. Add-on definitions to "circlize.base.Rcss"
+ */ 
+
+circlize {
+  start.degree: 180;
+  gap.degree: 3;
+}
+circlizeaxis {
+  minor.ticks: 2;
+}
+circlizeregion {
+  track.height: 0.14;
+  track.margin: 0.02 0.01;
+  bg.col: #eeeeee;
+  bg.border: #444444;
+}
+text {
+  cex: 0.8;
+}
+

@@ -1,16 +1,12 @@
 /**
- * Custom style 4
- *
- * This style definition starts with the contents of circlize.base.Rcss
- * and then introduces add-ons and customizations
- *
+ * Custom style for circlize vignette
  **/
 
 /** Settings for overall circlize chart **/
 circlize {
   start.degree: 0;
-  gap.degree: 2;
-  unit.circle.segments: 300;
+  gap.degree: 1;
+  unit.circle.segments: 200;
   points.overflow.warning: 1;
   canvas.xlim: -1 1;
   canvas.ylim: -1 1;
@@ -27,9 +23,9 @@ circlizeaxis {
   labels.facing: inside;
   labels.niceFacing: 1;
   major.by.degree: 10;
-  minor.ticks: 0;
-  major.tick.percentage: 0.2;
-  labels.away.percentage: 0.1;
+  minor.ticks: 4;
+  major.tick.percentage: 0.1;
+  labels.away.percentage: 0.05;
 }
 
 /** Settings tuning lines/curves within sectors **/
@@ -44,7 +40,7 @@ circlizelink {
   h2: 1;
   w: 1;
   w2: 1;
-  col: #ccccee;
+  col: #000000;
   lwd: 1;
   lty: 1;
   border: NA;
@@ -58,52 +54,66 @@ circlizelink {
 
 /** Settings for individual regions/sectors **/
 circlizeregion {
-  track.height: 0.12;
-  track.margin: 0.012 0.01;
+  track.height: 0.1;
+  track.margin: 0.01 0.01;
   cell.padding: 0.02 1 0.02 1;
-  bg.col: #f0f0f0;
-  bg.border: #222299;
+  bg.col: NA;
+  bg.border: #000000;
   bg.lty: 1;
   bg.lwd: 1;
 }
 
 /** Settings for text displayed within regions **/
 circlizetext {
-  facing: outside;
+  facing: inside;
   niceFacing: 0;
   adj: 0.5;
+}
+
+/** Settings for chord diagrams **/
+chorddiagram {
+  grid.col: NULL;
+  grid.border: NA;
+  transparency: 0.5;
+  col: grid;
+  directional: 0;
+  direction.type: diffHeight;
+  diffHeight: 0.04;
+  reduce: 1e-5;
+  self.link: 2;
+  annotationTrack: name grid axis; 
+  annotationTrackHeight: 0.07 0.07;
+  link.sort: FALSE;
+  link.decreasing: TRUE;
+  namelab.line: 0.9; 
 }
 
 
 /** 
  * Custom changes to circlize-specific selectors 
 **/
-circlize.flip {
-  start.degree: 180;
-  clock.wise: 0;
-}
-circlizeregion.a, circlizeregion.b {
-  bg.col: #ffdddd;
-}
-circlizeregion.c, circlizeregion.d {
-  bg.col: #ddddff;
-}
-circlizeregion.f, circlizeregion.h {
-  bg.col: #ffffff;
-}
 circlizelink.linkA {
-  lwd: 6;  
-  col: #ffdddd;
+  lwd: 1;  
+}
+circlizelink.linkB {
+  col: #ff0000;
+  border: #0000ff;
+  h: 0.2;
+  h2: 0.2;
+}
+circlizelink.linkC {
+  col: #00ff00;
+  lwd: 2;
+  lty: 2;
 }
 
 
 /** 
- * Custom changes to base graphics
- **/
+ * Custom changes to base graphics used within the circlize chart
+**/
 points {
   pch: 16;
   cex: 0.5;
-  col: #444466;
 }
 points.first {
   pch: 16;
@@ -116,10 +126,8 @@ points.second {
   col: #0000ff;
 }
 text.axis {
-  cex: 0.8;
+  cex: 1;
 }
-lines.axis {
-  lwd: 1.9;
-  col: #000000;
-}
+
+
 
